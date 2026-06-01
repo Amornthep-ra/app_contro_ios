@@ -1,4 +1,5 @@
 // lib/main.dart
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'core/routes/app_routes.dart';
 import 'core/ui/gamepad_skin.dart';
@@ -192,5 +193,4 @@ class LoggingNavigatorObserver extends NavigatorObserver {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
   }
 }
-
 
