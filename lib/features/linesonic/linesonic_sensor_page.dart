@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/ble/ble_manager.dart';
+import '../../core/ui/adaptive_page_metrics.dart';
 import '../../core/widgets/connection_status_badge.dart';
 import '../../core/ui/language_controller.dart';
 
@@ -115,7 +116,9 @@ class _LineSonicSensorPageState extends State<LineSonicSensorPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              LanguageController.isThai.value ? '\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d BLE' : 'BLE not connected',
+              LanguageController.isThai.value
+                  ? '\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d BLE'
+                  : 'BLE not connected',
             ),
           ),
         );
@@ -145,7 +148,9 @@ class _LineSonicSensorPageState extends State<LineSonicSensorPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              LanguageController.isThai.value ? '\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d BLE' : 'BLE not connected',
+              LanguageController.isThai.value
+                  ? '\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d BLE'
+                  : 'BLE not connected',
             ),
           ),
         );
@@ -207,7 +212,11 @@ class _LineSonicSensorPageState extends State<LineSonicSensorPage> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text(isThai ? '\u0e27\u0e34\u0e18\u0e35\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19' : 'Tutorial'),
+          title: Text(
+            isThai
+                ? '\u0e27\u0e34\u0e18\u0e35\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19'
+                : 'Tutorial',
+          ),
           content: SingleChildScrollView(
             child: Text(
               isThai
@@ -227,12 +236,15 @@ class _LineSonicSensorPageState extends State<LineSonicSensorPage> {
   }
 
   Widget _buildPlainBackButton(bool isThai) {
+    final metrics = AdaptivePageMetrics.forWidth(
+      MediaQuery.of(context).size.width,
+    );
     return SizedBox(
-      width: 44,
-      height: 44,
+      width: metrics.backButtonSize,
+      height: metrics.backButtonSize,
       child: IconButton(
         tooltip: _t(isThai, '\u0e01\u0e25\u0e31\u0e1a', 'Back'),
-        icon: const Icon(Icons.chevron_left_rounded, size: 30),
+        icon: Icon(Icons.chevron_left_rounded, size: metrics.backIconSize),
         onPressed: () {
           HapticFeedback.selectionClick();
           Navigator.maybePop(context);
@@ -303,7 +315,11 @@ class _LineSonicSensorPageState extends State<LineSonicSensorPage> {
       return _buildEmptyPanel(
         theme: theme,
         icon: Icons.sensors_rounded,
-        title: _t(isThai, '\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25', 'No data yet'),
+        title: _t(
+          isThai,
+          '\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25',
+          'No data yet',
+        ),
         hint: _t(
           isThai,
           '\u0e41\u0e15\u0e30\u0e2d\u0e48\u0e32\u0e19\u0e15\u0e2d\u0e19\u0e19\u0e35\u0e49\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e14\u0e36\u0e07\u0e04\u0e48\u0e32\u0e40\u0e0b\u0e19\u0e40\u0e0b\u0e2d\u0e23\u0e4c',
@@ -338,7 +354,11 @@ class _LineSonicSensorPageState extends State<LineSonicSensorPage> {
       return _buildEmptyPanel(
         theme: theme,
         icon: Icons.receipt_long_rounded,
-        title: _t(isThai, '\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01', 'No logs yet'),
+        title: _t(
+          isThai,
+          '\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01',
+          'No logs yet',
+        ),
         hint: _t(
           isThai,
           '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 TX/RX \u0e08\u0e30\u0e41\u0e2a\u0e14\u0e07\u0e2b\u0e25\u0e31\u0e07\u0e08\u0e32\u0e01\u0e2d\u0e48\u0e32\u0e19\u0e04\u0e48\u0e32',
@@ -367,10 +387,13 @@ class _LineSonicSensorPageState extends State<LineSonicSensorPage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isThai = LanguageController.isThai.value;
+    final metrics = AdaptivePageMetrics.forWidth(
+      MediaQuery.of(context).size.width,
+    );
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 44,
+        toolbarHeight: metrics.toolbarHeight,
         elevation: 0,
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
@@ -381,9 +404,13 @@ class _LineSonicSensorPageState extends State<LineSonicSensorPage> {
             : null,
         centerTitle: true,
         title: Text(
-          _t(isThai, '\u0e2d\u0e48\u0e32\u0e19\u0e40\u0e0b\u0e19\u0e40\u0e0b\u0e2d\u0e23\u0e4c', 'Read Sensor'),
+          _t(
+            isThai,
+            '\u0e2d\u0e48\u0e32\u0e19\u0e40\u0e0b\u0e19\u0e40\u0e0b\u0e2d\u0e23\u0e4c',
+            'Read Sensor',
+          ),
           style: TextStyle(
-            fontSize: 18,
+            fontSize: metrics.titleSize,
             fontWeight: FontWeight.w700,
             letterSpacing: 0,
             color: scheme.onSurface,
@@ -391,7 +418,9 @@ class _LineSonicSensorPageState extends State<LineSonicSensorPage> {
         ),
         actions: [
           IconButton(
-            tooltip: isThai ? '\u0e27\u0e34\u0e18\u0e35\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19' : 'Tutorial',
+            tooltip: isThai
+                ? '\u0e27\u0e34\u0e18\u0e35\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19'
+                : 'Tutorial',
             onPressed: () => _showTutorial(context),
             icon: const Icon(Icons.help_outline),
           ),
@@ -401,24 +430,93 @@ class _LineSonicSensorPageState extends State<LineSonicSensorPage> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        children: [
-          Row(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: metrics.contentMaxWidth),
+          child: ListView(
+            padding: metrics.pagePadding,
             children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _sendRead,
-                  icon: const Icon(Icons.download_rounded),
-                  label: Text(
-                    _t(isThai, '\u0e2d\u0e48\u0e32\u0e19\u0e15\u0e2d\u0e19\u0e19\u0e35\u0e49', 'Read Now'),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _sendRead,
+                      icon: const Icon(Icons.download_rounded),
+                      label: Text(
+                        _t(
+                          isThai,
+                          '\u0e2d\u0e48\u0e32\u0e19\u0e15\u0e2d\u0e19\u0e19\u0e35\u0e49',
+                          'Read Now',
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(0, 48),
+                        elevation: 1,
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(0, 48),
-                    elevation: 1,
+                  const SizedBox(width: 12),
+                  FilledButton.tonalIcon(
+                    onPressed: () => _setAuto(!_auto),
+                    icon: Icon(
+                      _auto ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    ),
+                    label: Text(
+                      _auto
+                          ? _t(
+                              isThai,
+                              '\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 \u0e40\u0e1b\u0e34\u0e14',
+                              'Auto On',
+                            )
+                          : _t(
+                              isThai,
+                              '\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 \u0e1b\u0e34\u0e14',
+                              'Auto Off',
+                            ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(118, 44),
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: _forceReadTx,
+                  icon: const Icon(Icons.read_more_rounded, size: 18),
+                  label: Text(
+                    _t(
+                      isThai,
+                      '\u0e2d\u0e48\u0e32\u0e19\u0e41\u0e1a\u0e1a\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a',
+                      'Read (force)',
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 38),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    foregroundColor: scheme.onSurfaceVariant,
+                    side: BorderSide(color: scheme.outlineVariant),
                     textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                       letterSpacing: 0,
                     ),
                     shape: RoundedRectangleBorder(
@@ -427,116 +525,75 @@ class _LineSonicSensorPageState extends State<LineSonicSensorPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              FilledButton.tonalIcon(
-                onPressed: () => _setAuto(!_auto),
-                icon: Icon(_auto ? Icons.pause_rounded : Icons.play_arrow_rounded),
-                label: Text(
-                  _auto
-                      ? _t(isThai, '\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 \u0e40\u0e1b\u0e34\u0e14', 'Auto On')
-                      : _t(isThai, '\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 \u0e1b\u0e34\u0e14', 'Auto Off'),
-                ),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(118, 44),
-                  textStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0,
+              const SizedBox(height: 12),
+              DropdownButtonFormField<int>(
+                initialValue: _intervalMs,
+                decoration: InputDecoration(
+                  label: Text(
+                    isThai ? 'ช่วงเวลาอัตโนมัติ (ms)' : 'Auto Interval (ms)',
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
+                  border: const OutlineInputBorder(),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: _forceReadTx,
-              icon: const Icon(Icons.read_more_rounded, size: 18),
-              label: Text(
-                _t(isThai, '\u0e2d\u0e48\u0e32\u0e19\u0e41\u0e1a\u0e1a\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a', 'Read (force)'),
-              ),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(0, 38),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                foregroundColor: scheme.onSurfaceVariant,
-                side: BorderSide(color: scheme.outlineVariant),
-                textStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<int>(
-            initialValue: _intervalMs,
-            decoration: InputDecoration(
-              label: Text(
-                isThai ? 'ช่วงเวลาอัตโนมัติ (ms)' : 'Auto Interval (ms)',
-              ),
-              border: const OutlineInputBorder(),
-            ),
-            items: const [
-              DropdownMenuItem(value: 100, child: Text('100')),
-              DropdownMenuItem(value: 200, child: Text('200')),
-              DropdownMenuItem(value: 500, child: Text('500')),
-              DropdownMenuItem(value: 1000, child: Text('1000')),
-            ],
-            onChanged: (val) {
-              if (val == null) return;
-              setState(() => _intervalMs = val);
-              if (_auto) _setAuto(true);
-            },
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _t(isThai, '\u0e04\u0e48\u0e32\u0e40\u0e0b\u0e19\u0e40\u0e0b\u0e2d\u0e23\u0e4c', 'Sensor Values'),
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _buildValues(theme),
-          const SizedBox(height: 12),
-          if (_sum != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withAlpha(140),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: theme.colorScheme.outlineVariant),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.functions, size: 18),
-                  const SizedBox(width: 8),
-                  Text('SUM: $_sum', style: theme.textTheme.labelLarge),
+                items: const [
+                  DropdownMenuItem(value: 100, child: Text('100')),
+                  DropdownMenuItem(value: 200, child: Text('200')),
+                  DropdownMenuItem(value: 500, child: Text('500')),
+                  DropdownMenuItem(value: 1000, child: Text('1000')),
                 ],
+                onChanged: (val) {
+                  if (val == null) return;
+                  setState(() => _intervalMs = val);
+                  if (_auto) _setAuto(true);
+                },
               ),
-            ),
-          const SizedBox(height: 20),
-          Text(
-            _t(isThai, '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01', 'Log'),
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+              const SizedBox(height: 16),
+              Text(
+                _t(
+                  isThai,
+                  '\u0e04\u0e48\u0e32\u0e40\u0e0b\u0e19\u0e40\u0e0b\u0e2d\u0e23\u0e4c',
+                  'Sensor Values',
+                ),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildValues(theme),
+              const SizedBox(height: 12),
+              if (_sum != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withAlpha(
+                      140,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.functions, size: 18),
+                      const SizedBox(width: 8),
+                      Text('SUM: $_sum', style: theme.textTheme.labelLarge),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 20),
+              Text(
+                _t(isThai, '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01', 'Log'),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildLog(theme, isThai),
+            ],
           ),
-          const SizedBox(height: 8),
-          _buildLog(theme, isThai),
-        ],
+        ),
       ),
     );
   }
 }
-
-
-
-

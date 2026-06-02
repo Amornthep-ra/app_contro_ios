@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/connection/app_connection.dart';
 import '../../core/ble/ble_manager.dart';
 import '../../core/ble/ble_permissions.dart';
+import '../../core/ui/adaptive_page_metrics.dart';
 import '../../core/ui/language_controller.dart';
 
 class BluetoothBlePage extends StatefulWidget {
@@ -64,21 +65,23 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
   bool _isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
   ColorScheme _scheme(BuildContext context) => Theme.of(context).colorScheme;
-  Color _textPrimary(BuildContext context) =>
-      _scheme(context).onSurface;
+  Color _textPrimary(BuildContext context) => _scheme(context).onSurface;
   Color _textSecondary(BuildContext context) =>
       _scheme(context).onSurfaceVariant;
   Color _textTertiary(BuildContext context) =>
       _opacity(_scheme(context).onSurfaceVariant, 0.82);
-  Color _panelBg(BuildContext context) =>
-      _opacity(_scheme(context).surfaceContainerHighest, _isDark(context) ? 0.55 : 0.9);
+  Color _panelBg(BuildContext context) => _opacity(
+    _scheme(context).surfaceContainerHighest,
+    _isDark(context) ? 0.55 : 0.9,
+  );
   Color _panelBorder(BuildContext context) =>
       _opacity(_scheme(context).outlineVariant, 0.78);
-  Color _pillBg(BuildContext context) =>
-      _opacity(_scheme(context).primaryContainer, _isDark(context) ? 0.56 : 0.78);
+  Color _pillBg(BuildContext context) => _opacity(
+    _scheme(context).primaryContainer,
+    _isDark(context) ? 0.56 : 0.78,
+  );
 
-  String _t(String th, String en) =>
-      LanguageController.isThai.value ? th : en;
+  String _t(String th, String en) => LanguageController.isThai.value ? th : en;
 
   Widget _homeIcon(String name, {double size = 24}) {
     return Image.asset(
@@ -90,12 +93,15 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
   }
 
   Widget _buildPlainBackButton() {
+    final metrics = AdaptivePageMetrics.forWidth(
+      MediaQuery.of(context).size.width,
+    );
     return SizedBox(
-      width: 44,
-      height: 44,
+      width: metrics.backButtonSize,
+      height: metrics.backButtonSize,
       child: IconButton(
         tooltip: _t('กลับ', 'Back'),
-        icon: const Icon(Icons.chevron_left_rounded, size: 30),
+        icon: Icon(Icons.chevron_left_rounded, size: metrics.backIconSize),
         onPressed: () {
           HapticFeedback.selectionClick();
           Navigator.maybePop(context);
@@ -371,7 +377,6 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
   }
 
   Future<void> _disconnect() async {
-
     _lastDisconnectTime = DateTime.now();
 
     await BleManager.instance.disconnect();
@@ -430,8 +435,7 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
 
     if (_lastDisconnectTime != null) {
       final now = DateTime.now();
-      if (now.difference(_lastDisconnectTime!) <
-          const Duration(seconds: 3)) {
+      if (now.difference(_lastDisconnectTime!) < const Duration(seconds: 3)) {
         debugPrint("Cooldown: wait a moment before reconnect");
         _showSnack(
           _t('รอสักครู่ก่อนเชื่อมต่อใหม่', 'Please wait before reconnecting.'),
@@ -463,7 +467,6 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
         autoConnect: false,
       );
 
-
       if (mounted) {
         setState(() => _connectedDevice = d);
       }
@@ -479,7 +482,9 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
       _lastDeviceNamePersisted = showName;
 
       if (mounted) {
-        _showSnack(_t('เชื่อมต่อกับ $showName สำเร็จ', 'Connected to $showName'));
+        _showSnack(
+          _t('เชื่อมต่อกับ $showName สำเร็จ', 'Connected to $showName'),
+        );
       }
 
       BleManager.instance.setDevice(d);
@@ -495,7 +500,10 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
         }
         if (mounted) {
           _showSnack(
-            _t('ไม่พบ UART RX/TX characteristic', 'UART RX/TX characteristic not found'),
+            _t(
+              'ไม่พบ UART RX/TX characteristic',
+              'UART RX/TX characteristic not found',
+            ),
           );
         }
       } else {
@@ -548,7 +556,7 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
     }
   }
 
-  Widget _buildBleStatusBar() {
+  Widget _buildBleStatusBar(AdaptivePageMetrics metrics) {
     return StreamBuilder<bool>(
       stream: BleManager.instance.connectionStream,
       initialData: BleManager.instance.isConnected,
@@ -576,9 +584,9 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
         final titleColor = scheme.onSurface;
         final subtitleColor = scheme.onSurfaceVariant;
         final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: titleColor,
-            );
+          fontWeight: FontWeight.w700,
+          color: titleColor,
+        );
 
         final grad = connected
             ? LinearGradient(
@@ -611,7 +619,10 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
               ? _t('กำลังเชื่อมต่อ...', 'Connecting...')
               : (_scanning
                     ? (_scanSecondsLeft > 0
-                          ? _t('กำลังค้นหา (${_scanSecondsLeft}s)', 'Scanning (${_scanSecondsLeft}s)')
+                          ? _t(
+                              'กำลังค้นหา (${_scanSecondsLeft}s)',
+                              'Scanning (${_scanSecondsLeft}s)',
+                            )
                           : _t('กำลังค้นหา...', 'Scanning...'))
                     : _t('ค้นหา', 'Scan'));
 
@@ -648,18 +659,21 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          padding: EdgeInsets.symmetric(
+            vertical: metrics.isTablet ? 14 : 10,
+            horizontal: metrics.isTablet ? 16 : 12,
+          ),
           width: double.infinity,
           decoration: BoxDecoration(
             gradient: grad,
             border: Border.all(color: border, width: 1.1),
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(metrics.cardRadius),
           ),
           child: Row(
             children: [
               Container(
-                width: 34,
-                height: 34,
+                width: metrics.isTablet ? metrics.iconBoxSize : 34,
+                height: metrics.isTablet ? metrics.iconBoxSize : 34,
                 decoration: BoxDecoration(
                   color: connected
                       ? _opacity(scheme.primary, 0.14)
@@ -671,7 +685,7 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
                     connected
                         ? 'Bluetooth Connected.png'
                         : 'Bluetooth Disabled.png',
-                    size: 24,
+                    size: metrics.isTablet ? metrics.iconSize : 24,
                   ),
                 ),
               ),
@@ -680,7 +694,9 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 220),
                   child: Column(
-                    key: ValueKey(connected ? "connected_$name" : "disconnected"),
+                    key: ValueKey(
+                      connected ? "connected_$name" : "disconnected",
+                    ),
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -694,11 +710,16 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        connected ? name : _t('กดค้นหาเพื่อเริ่มใช้งาน', 'Tap scan to begin'),
+                        connected
+                            ? name
+                            : _t(
+                                'กดค้นหาเพื่อเริ่มใช้งาน',
+                                'Tap scan to begin',
+                              ),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: subtitleColor,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          color: subtitleColor,
+                          fontWeight: FontWeight.w600,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -706,16 +727,14 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
                   ),
                 ),
               ),
-              if (actions.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                ...actions,
-              ],
+              if (actions.isNotEmpty) ...[const SizedBox(width: 8), ...actions],
             ],
           ),
         );
       },
     );
   }
+
   Widget _smallAction({
     required IconData icon,
     String? assetName,
@@ -746,15 +765,16 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
           : _homeIcon(assetName, size: 16),
       label: Text(
         label,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
+    final metrics = AdaptivePageMetrics.forWidth(
+      MediaQuery.of(context).size.width,
+    );
     final results = _deviceMap.values.map((e) => e.result).where((r) {
       if (_connectedDevice == null) {
         return true;
@@ -772,185 +792,274 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
         return Scaffold(
           appBar: AppBar(
             automaticallyImplyLeading: false,
+            toolbarHeight: metrics.toolbarHeight,
             leading: Navigator.of(context).canPop()
                 ? _buildPlainBackButton()
                 : null,
             centerTitle: false,
-            title: Text(_t('BLE Connection', 'BLE Connection')),
+            title: Text(
+              _t('BLE Connection', 'BLE Connection'),
+              style: TextStyle(
+                fontSize: metrics.titleSize,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
           body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-              child: Column(
-                children: [
-                  _buildBleStatusBar(),
-                  const SizedBox(height: 10),
-                  _lastDeviceCard(
-                    hasLastDevice: lastId != null,
-                    name: lastName ?? _t('ยังไม่มีอุปกรณ์ล่าสุด', 'No recent device'),
-                    id: lastId ?? '-',
-                    onConnect: (lastId == null || _connecting || _scanning)
-                        ? null
-                        : () {
-                            final entry = _deviceMap[lastId];
-                            if (entry != null) {
-                              _connect(entry.result);
-                            } else {
-                              _pendingConnectLast = true;
-                              _startScan();
-                            }
-                          },
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-                      decoration: BoxDecoration(
-                        color: _opacity(
-                          scheme.surfaceContainerHighest,
-                          _isDark(context) ? 0.42 : 0.72,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: _opacity(scheme.outlineVariant, 0.55),
-                        ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: metrics.contentMaxWidth),
+                child: Padding(
+                  padding: metrics.pagePadding.copyWith(bottom: 8),
+                  child: Column(
+                    children: [
+                      _buildBleStatusBar(metrics),
+                      SizedBox(height: metrics.cardGap),
+                      _lastDeviceCard(
+                        metrics: metrics,
+                        hasLastDevice: lastId != null,
+                        name:
+                            lastName ??
+                            _t('ยังไม่มีอุปกรณ์ล่าสุด', 'No recent device'),
+                        id: lastId ?? '-',
+                        onConnect: (lastId == null || _connecting || _scanning)
+                            ? null
+                            : () {
+                                final entry = _deviceMap[lastId];
+                                if (entry != null) {
+                                  _connect(entry.result);
+                                } else {
+                                  _pendingConnectLast = true;
+                                  _startScan();
+                                }
+                              },
                       ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              _homeIcon('Search-Scan.png', size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                _t('อุปกรณ์ที่ค้นพบ', 'Discovered devices'),
-                                style: TextStyle(
-                                  color: _textPrimary(context),
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
+                      SizedBox(height: metrics.cardGap),
+                      Expanded(
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.fromLTRB(
+                            metrics.cardPadding,
+                            metrics.isTablet ? 14 : 10,
+                            metrics.cardPadding,
+                            8,
                           ),
-                          const SizedBox(height: 8),
-                          Expanded(
-                            child: results.isEmpty
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
+                          decoration: BoxDecoration(
+                            color: _opacity(
+                              scheme.surfaceContainerHighest,
+                              _isDark(context) ? 0.42 : 0.72,
+                            ),
+                            borderRadius: BorderRadius.circular(
+                              metrics.cardRadius,
+                            ),
+                            border: Border.all(
+                              color: _opacity(scheme.outlineVariant, 0.55),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
                                 children: [
                                   _homeIcon(
-                                    _scanning
-                                        ? 'Search-Scan.png'
-                                        : 'Bluetooth Disabled.png',
-                                    size: 42,
+                                    'Search-Scan.png',
+                                    size: metrics.isTablet ? 22 : 20,
                                   ),
-                                  const SizedBox(height: 10),
+                                  SizedBox(width: metrics.isTablet ? 10 : 8),
                                   Text(
-                                    _scanning
-                                        ? _t(
-                                            'กำลังค้นหาอุปกรณ์ ...',
-                                            'Scanning for devices...',
-                                          )
-                                        : _t(
-                                            'ไม่พบรายการอุปกรณ์\nกด ค้นหา เพื่อลองอีกครั้ง',
-                                            'No devices found.\nTap Scan to try again.',
-                                          ),
-                                    textAlign: TextAlign.center,
+                                    _t('อุปกรณ์ที่ค้นพบ', 'Discovered devices'),
                                     style: TextStyle(
-                                      color: scheme.onSurfaceVariant,
-                                      fontWeight: FontWeight.w600,
-                                      height: 1.3,
+                                      color: _textPrimary(context),
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: metrics.isTablet ? 16 : 14,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          )
-                        : ListView.separated(
-                            padding: EdgeInsets.zero,
-                            itemCount: results.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 8),
-                            itemBuilder: (context, index) {
-                              final r = results[index];
-                              final name = r.device.platformName.isNotEmpty
-                                  ? r.device.platformName
-                                  : (r.advertisementData.advName.isNotEmpty
-                                      ? r.advertisementData.advName
-                                      : r.device.remoteId.str);
-
-                              final rssi = r.rssi;
-                              final signalText = _signalLabel(rssi);
-                              final signalColor = _signalColor(context, rssi);
-                              final signalIcon = _signalIcon(rssi);
-
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(16),
-                                  onTap: _connecting ? null : () => _connect(r),
-                                  child: Ink(
-                                    padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-                                    decoration: BoxDecoration(
-                                      color: _panelBg(context),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: _panelBorder(context)),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 36,
-                                          height: 36,
-                                          decoration: BoxDecoration(
-                                            color: _opacity(signalColor, 0.13),
-                                            borderRadius: BorderRadius.circular(10),
+                              SizedBox(height: metrics.isTablet ? 12 : 8),
+                              Expanded(
+                                child: results.isEmpty
+                                    ? Center(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
                                           ),
-                                          child: Icon(signalIcon, color: signalColor, size: 18),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Text(
-                                                name,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 15,
-                                                ),
+                                              _homeIcon(
+                                                _scanning
+                                                    ? 'Search-Scan.png'
+                                                    : 'Bluetooth Disabled.png',
+                                                size: metrics.isTablet
+                                                    ? 50
+                                                    : 42,
                                               ),
-                                              const SizedBox(height: 2),
+                                              const SizedBox(height: 10),
                                               Text(
-                                                'RSSI: $rssi dBm | $signalText',
+                                                _scanning
+                                                    ? _t(
+                                                        'กำลังค้นหาอุปกรณ์ ...',
+                                                        'Scanning for devices...',
+                                                      )
+                                                    : _t(
+                                                        'ไม่พบรายการอุปกรณ์\nกด ค้นหา เพื่อลองอีกครั้ง',
+                                                        'No devices found.\nTap Scan to try again.',
+                                                      ),
+                                                textAlign: TextAlign.center,
                                                 style: TextStyle(
-                                                  color: _textSecondary(context),
-                                                  fontSize: 12.5,
+                                                  color:
+                                                      scheme.onSurfaceVariant,
+                                                  fontSize:
+                                                      metrics.bodyFontSize,
+                                                  fontWeight: FontWeight.w600,
+                                                  height: 1.3,
                                                 ),
                                               ),
                                             ],
                                           ),
                                         ),
-                                        Icon(
-                                          Icons.chevron_right,
-                                          color: _opacity(_textSecondary(context), 0.75),
+                                      )
+                                    : ListView.separated(
+                                        padding: EdgeInsets.zero,
+                                        itemCount: results.length,
+                                        separatorBuilder: (_, __) => SizedBox(
+                                          height: metrics.cardGap * 0.7,
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
+                                        itemBuilder: (context, index) {
+                                          final r = results[index];
+                                          final name =
+                                              r.device.platformName.isNotEmpty
+                                              ? r.device.platformName
+                                              : (r
+                                                        .advertisementData
+                                                        .advName
+                                                        .isNotEmpty
+                                                    ? r
+                                                          .advertisementData
+                                                          .advName
+                                                    : r.device.remoteId.str);
+
+                                          final rssi = r.rssi;
+                                          final signalText = _signalLabel(rssi);
+                                          final signalColor = _signalColor(
+                                            context,
+                                            rssi,
+                                          );
+                                          final signalIcon = _signalIcon(rssi);
+
+                                          return Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              onTap: _connecting
+                                                  ? null
+                                                  : () => _connect(r),
+                                              child: Ink(
+                                                padding: EdgeInsets.fromLTRB(
+                                                  metrics.isTablet ? 14 : 12,
+                                                  metrics.isTablet ? 12 : 10,
+                                                  metrics.isTablet ? 10 : 8,
+                                                  metrics.isTablet ? 12 : 10,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: _panelBg(context),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        metrics.cardRadius,
+                                                      ),
+                                                  border: Border.all(
+                                                    color: _panelBorder(
+                                                      context,
+                                                    ),
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Container(
+                                                      width: metrics.isTablet
+                                                          ? 42
+                                                          : 36,
+                                                      height: metrics.isTablet
+                                                          ? 42
+                                                          : 36,
+                                                      decoration: BoxDecoration(
+                                                        color: _opacity(
+                                                          signalColor,
+                                                          0.13,
+                                                        ),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              10,
+                                                            ),
+                                                      ),
+                                                      child: Icon(
+                                                        signalIcon,
+                                                        color: signalColor,
+                                                        size: metrics.isTablet
+                                                            ? 22
+                                                            : 18,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 10),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            name,
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w700,
+                                                                  fontSize: 15,
+                                                                ),
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 2,
+                                                          ),
+                                                          Text(
+                                                            'RSSI: $rssi dBm | $signalText',
+                                                            style: TextStyle(
+                                                              color:
+                                                                  _textSecondary(
+                                                                    context,
+                                                                  ),
+                                                              fontSize: 12.5,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    Icon(
+                                                      Icons.chevron_right,
+                                                      color: _opacity(
+                                                        _textSecondary(context),
+                                                        0.75,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                              ),
+                            ],
                           ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -958,6 +1067,7 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
       },
     );
   }
+
   String? _resolveLastDeviceName(String? deviceId) {
     if (deviceId == null) return _lastDeviceName ?? _lastDeviceNamePersisted;
     final entry = _deviceMap[deviceId];
@@ -966,14 +1076,15 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
       final name = r.device.platformName.isNotEmpty
           ? r.device.platformName
           : (r.advertisementData.advName.isNotEmpty
-              ? r.advertisementData.advName
-              : r.device.remoteId.str);
+                ? r.advertisementData.advName
+                : r.device.remoteId.str);
       return name.isNotEmpty ? name : deviceId;
     }
     return _lastDeviceName ?? _lastDeviceNamePersisted ?? deviceId;
   }
 
   Widget _lastDeviceCard({
+    required AdaptivePageMetrics metrics,
     required bool hasLastDevice,
     required String name,
     required String id,
@@ -982,30 +1093,33 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
     final scheme = _scheme(context);
     return Container(
       padding: EdgeInsets.fromLTRB(
-        12,
-        hasLastDevice ? 12 : 10,
-        12,
-        hasLastDevice ? 12 : 10,
+        metrics.cardPadding,
+        metrics.cardPadding,
+        hasLastDevice ? metrics.cardPadding : metrics.cardPadding * 0.8,
+        metrics.cardPadding,
       ),
       decoration: BoxDecoration(
         color: _panelBg(context),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(metrics.cardRadius),
         border: Border.all(color: _panelBorder(context)),
       ),
       child: Row(
         children: [
           Container(
-            width: 34,
-            height: 34,
+            width: metrics.isTablet ? metrics.iconBoxSize : 34,
+            height: metrics.isTablet ? metrics.iconBoxSize : 34,
             decoration: BoxDecoration(
               color: _opacity(scheme.tertiaryContainer, 0.72),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
-              child: _homeIcon('Recent Activity-History.png', size: 22),
+              child: _homeIcon(
+                'Recent Activity-History.png',
+                size: metrics.isTablet ? metrics.iconSize : 22,
+              ),
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: metrics.isTablet ? 14 : 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1016,7 +1130,7 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
                     _t('อุปกรณ์ล่าสุด', 'Last device'),
                     style: TextStyle(
                       color: _textSecondary(context),
-                      fontSize: 11,
+                      fontSize: metrics.isTablet ? 13 : 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1028,6 +1142,7 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: _textPrimary(context),
+                    fontSize: metrics.isTablet ? 16 : null,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1038,7 +1153,7 @@ class _BluetoothBlePageState extends State<BluetoothBlePage> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: _textTertiary(context),
-                      fontSize: 11,
+                      fontSize: metrics.isTablet ? 13 : 11,
                     ),
                   ),
               ],

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/ble/ble_manager.dart';
+import '../../core/ui/adaptive_page_metrics.dart';
 import '../../core/ui/language_controller.dart';
 import '../../core/widgets/connection_status_badge.dart';
 
@@ -31,16 +32,16 @@ class _StepData {
     required this.stopBetween,
     this.collapsed = false,
     bool? showOptions,
-  })  : kpCtrl = TextEditingController(text: kp),
-        kdCtrl = TextEditingController(text: kd),
-        speedCtrl = TextEditingController(text: speed),
-        valueCtrl = TextEditingController(text: value),
-        afterMsCtrl = TextEditingController(text: afterMs),
-        afterSpeedCtrl = TextEditingController(text: afterSpeed),
-        stopMsCtrl = TextEditingController(text: stopMs),
-        holdMsCtrl = TextEditingController(text: holdMs),
-        holdThresholdCtrl = TextEditingController(text: holdThreshold),
-        showOptions = showOptions ?? (mode != null);
+  }) : kpCtrl = TextEditingController(text: kp),
+       kdCtrl = TextEditingController(text: kd),
+       speedCtrl = TextEditingController(text: speed),
+       valueCtrl = TextEditingController(text: value),
+       afterMsCtrl = TextEditingController(text: afterMs),
+       afterSpeedCtrl = TextEditingController(text: afterSpeed),
+       stopMsCtrl = TextEditingController(text: stopMs),
+       holdMsCtrl = TextEditingController(text: holdMs),
+       holdThresholdCtrl = TextEditingController(text: holdThreshold),
+       showOptions = showOptions ?? (mode != null);
 
   final int id;
   _StepMode? mode;
@@ -61,23 +62,29 @@ class _StepData {
   bool showOptions;
 
   Map<String, dynamic> toJson() => {
-        'mode': mode == null ? '' : (mode == _StepMode.checksum ? 'CHECKSUM' : 'TIME'),
-        'kp': kpCtrl.text.trim().isEmpty ? '0' : kpCtrl.text.trim(),
-        'kd': kdCtrl.text.trim().isEmpty ? '0' : kdCtrl.text.trim(),
-        'speed': speedCtrl.text.trim().isEmpty ? '0' : speedCtrl.text.trim(),
-        'value': valueCtrl.text.trim().isEmpty ? '0' : valueCtrl.text.trim(),
-        'continueAfter': continueAfter,
-        'afterMs': afterMsCtrl.text.trim().isEmpty ? '0' : afterMsCtrl.text.trim(),
-        'afterSpeed': afterSpeedCtrl.text.trim().isEmpty ? '0' : afterSpeedCtrl.text.trim(),
-        'stopBetween': stopBetween,
-        'stopMs': stopMsCtrl.text.trim().isEmpty ? '0' : stopMsCtrl.text.trim(),
-        'holdMode': holdMode,
-        'holdMs': holdMsCtrl.text.trim().isEmpty ? '0' : holdMsCtrl.text.trim(),
-        'holdThreshold': holdThresholdCtrl.text.trim().isEmpty ? '0' : holdThresholdCtrl.text.trim(),
-        'lineColor': lineColor,
-        'collapsed': collapsed,
-        'showOptions': showOptions,
-      };
+    'mode': mode == null
+        ? ''
+        : (mode == _StepMode.checksum ? 'CHECKSUM' : 'TIME'),
+    'kp': kpCtrl.text.trim().isEmpty ? '0' : kpCtrl.text.trim(),
+    'kd': kdCtrl.text.trim().isEmpty ? '0' : kdCtrl.text.trim(),
+    'speed': speedCtrl.text.trim().isEmpty ? '0' : speedCtrl.text.trim(),
+    'value': valueCtrl.text.trim().isEmpty ? '0' : valueCtrl.text.trim(),
+    'continueAfter': continueAfter,
+    'afterMs': afterMsCtrl.text.trim().isEmpty ? '0' : afterMsCtrl.text.trim(),
+    'afterSpeed': afterSpeedCtrl.text.trim().isEmpty
+        ? '0'
+        : afterSpeedCtrl.text.trim(),
+    'stopBetween': stopBetween,
+    'stopMs': stopMsCtrl.text.trim().isEmpty ? '0' : stopMsCtrl.text.trim(),
+    'holdMode': holdMode,
+    'holdMs': holdMsCtrl.text.trim().isEmpty ? '0' : holdMsCtrl.text.trim(),
+    'holdThreshold': holdThresholdCtrl.text.trim().isEmpty
+        ? '0'
+        : holdThresholdCtrl.text.trim(),
+    'lineColor': lineColor,
+    'collapsed': collapsed,
+    'showOptions': showOptions,
+  };
 
   void dispose() {
     kpCtrl.dispose();
@@ -100,18 +107,16 @@ class _PresetSlot {
 
   bool get isEmpty => steps.isEmpty;
 
-  Map<String, dynamic> toJson() => {
-        'name': name,
-        'steps': steps,
-      };
+  Map<String, dynamic> toJson() => {'name': name, 'steps': steps};
 
   static _PresetSlot fromJson(Map<String, dynamic> json) => _PresetSlot(
-        name: (json['name'] as String?) ?? 'Preset',
-        steps: (json['steps'] as List<dynamic>?)
-                ?.whereType<Map<String, dynamic>>()
-                .toList() ??
-            [],
-      );
+    name: (json['name'] as String?) ?? 'Preset',
+    steps:
+        (json['steps'] as List<dynamic>?)
+            ?.whereType<Map<String, dynamic>>()
+            .toList() ??
+        [],
+  );
 }
 
 class LineSonicPidPage extends StatefulWidget {
@@ -177,7 +182,10 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
 
   void _scheduleAutoSave() {
     _autosaveTimer?.cancel();
-    _autosaveTimer = Timer(const Duration(milliseconds: 400), _saveStepsToPrefs);
+    _autosaveTimer = Timer(
+      const Duration(milliseconds: 400),
+      _saveStepsToPrefs,
+    );
   }
 
   void _onSpeedChanged() {
@@ -209,26 +217,29 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
           ? _StepMode.checksum
           : (modeRaw.toUpperCase() == 'TIME' ? _StepMode.time : null);
       final collapsed = (item['collapsed'] as bool?) ?? false;
-      final showOptions = (item['showOptions'] as bool?) ?? (parsedMode != null);
-      _steps.add(_StepData(
-        id: nextId++,
-        mode: parsedMode,
-        kp: (item['kp'] as String?) ?? '0',
-        kd: (item['kd'] as String?) ?? '0',
-        speed: (item['speed'] as String?) ?? '0',
-        value: (item['value'] as String?) ?? '0',
-        afterMs: (item['afterMs'] as String?) ?? '0',
-        afterSpeed: (item['afterSpeed'] as String?) ?? '0',
-        stopMs: (item['stopMs'] as String?) ?? '0',
-        holdMs: (item['holdMs'] as String?) ?? '0',
-        holdThreshold: (item['holdThreshold'] as String?) ?? '0',
-        lineColor: (item['lineColor'] as int?) ?? 0,
-        holdMode: (item['holdMode'] as int?) ?? 0,
-        continueAfter: continueAfter,
-        stopBetween: (item['stopBetween'] as bool?) ?? false,
-        collapsed: collapsed,
-        showOptions: showOptions,
-      ));
+      final showOptions =
+          (item['showOptions'] as bool?) ?? (parsedMode != null);
+      _steps.add(
+        _StepData(
+          id: nextId++,
+          mode: parsedMode,
+          kp: (item['kp'] as String?) ?? '0',
+          kd: (item['kd'] as String?) ?? '0',
+          speed: (item['speed'] as String?) ?? '0',
+          value: (item['value'] as String?) ?? '0',
+          afterMs: (item['afterMs'] as String?) ?? '0',
+          afterSpeed: (item['afterSpeed'] as String?) ?? '0',
+          stopMs: (item['stopMs'] as String?) ?? '0',
+          holdMs: (item['holdMs'] as String?) ?? '0',
+          holdThreshold: (item['holdThreshold'] as String?) ?? '0',
+          lineColor: (item['lineColor'] as int?) ?? 0,
+          holdMode: (item['holdMode'] as int?) ?? 0,
+          continueAfter: continueAfter,
+          stopBetween: (item['stopBetween'] as bool?) ?? false,
+          collapsed: collapsed,
+          showOptions: showOptions,
+        ),
+      );
     }
   }
 
@@ -299,7 +310,8 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
 
   Future<void> _sendCommand(String msg, {String? toast}) async {
     final now = DateTime.now();
-    if (_sending || now.difference(_lastSend) < const Duration(milliseconds: 200)) {
+    if (_sending ||
+        now.difference(_lastSend) < const Duration(milliseconds: 200)) {
       return;
     }
     _sending = true;
@@ -310,7 +322,9 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _isThai ? '\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d BLE' : 'BLE not connected',
+            _isThai
+                ? '\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d BLE'
+                : 'BLE not connected',
           ),
         ),
       );
@@ -326,9 +340,9 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
     await BleManager.instance.send(msg, owner: owner);
     _sending = false;
     if (toast != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(toast)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(toast)));
     }
   }
 
@@ -341,13 +355,19 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
       final kd = _numOrZero(s.kdCtrl.text);
       final speed = _numOrZero(s.speedCtrl.text);
       final afterMs = s.continueAfter ? _numOrZero(s.afterMsCtrl.text) : '0';
-      final afterSpeed = s.continueAfter ? _numOrZero(s.afterSpeedCtrl.text) : '0';
+      final afterSpeed = s.continueAfter
+          ? _numOrZero(s.afterSpeedCtrl.text)
+          : '0';
       final stopMs = s.stopBetween ? _numOrZero(s.stopMsCtrl.text) : '0';
       final holdMs = s.holdMode == 0 ? '0' : _numOrZero(s.holdMsCtrl.text);
-      final holdThreshold = s.holdMode == 0 ? '0' : _numOrZero(s.holdThresholdCtrl.text);
+      final holdThreshold = s.holdMode == 0
+          ? '0'
+          : _numOrZero(s.holdThresholdCtrl.text);
       final holdMode = s.holdMode;
       final lineColor = s.lineColor;
-      parts.add('$mode,$value,$kp,$kd,$speed,$afterMs,$afterSpeed,$stopMs,$lineColor,$holdMs,$holdThreshold,$holdMode');
+      parts.add(
+        '$mode,$value,$kp,$kd,$speed,$afterMs,$afterSpeed,$stopMs,$lineColor,$holdMs,$holdThreshold,$holdMode',
+      );
     }
     return 'SEQ=${parts.join(';')}';
   }
@@ -370,7 +390,9 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _isThai ? 'รอ 3 วินาทีแล้วค่อยส่งใหม่' : 'Please wait 3 seconds before sending again',
+            _isThai
+                ? 'รอ 3 วินาทีแล้วค่อยส่งใหม่'
+                : 'Please wait 3 seconds before sending again',
           ),
         ),
       );
@@ -381,9 +403,7 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _isThai ? 'ยังไม่มี Step ให้ส่ง' : 'No steps to send',
-          ),
+          content: Text(_isThai ? 'ยังไม่มี Step ให้ส่ง' : 'No steps to send'),
         ),
       );
       return;
@@ -401,7 +421,9 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _isThai ? 'รอ 1 วินาทีแล้วค่อยส่งใหม่' : 'Please wait 1 second before sending again',
+            _isThai
+                ? 'รอ 1 วินาทีแล้วค่อยส่งใหม่'
+                : 'Please wait 1 second before sending again',
           ),
         ),
       );
@@ -412,16 +434,17 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _isThai ? 'ยังไม่มี Step ให้ส่ง' : 'No steps to send',
-          ),
+          content: Text(_isThai ? 'ยังไม่มี Step ให้ส่ง' : 'No steps to send'),
         ),
       );
       return;
     }
 
     final payload = _buildSeqPdPayload();
-    await _sendCommand(payload, toast: _isThai ? 'ส่ง PD+Speed แล้ว' : 'Sent PD+Speed');
+    await _sendCommand(
+      payload,
+      toast: _isThai ? 'ส่ง PD+Speed แล้ว' : 'Sent PD+Speed',
+    );
     _lastPdSend = DateTime.now();
   }
 
@@ -430,7 +453,10 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
   }
 
   Future<void> _sendReset() async {
-    await _sendCommand('RESET=1', toast: _isThai ? 'ส่ง Reset แล้ว' : 'Sent Reset');
+    await _sendCommand(
+      'RESET=1',
+      toast: _isThai ? 'ส่ง Reset แล้ว' : 'Sent Reset',
+    );
   }
 
   void _duplicateStep(int index) {
@@ -469,8 +495,9 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
 
   Future<void> _savePresetDialog() async {
     final isThai = _isThai;
-    final controller =
-        TextEditingController(text: _presets[_selectedPreset].name);
+    final controller = TextEditingController(
+      text: _presets[_selectedPreset].name,
+    );
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -496,8 +523,9 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
     );
     controller.dispose();
     if (name == null) return;
-    final fallbackName =
-        isThai ? 'รูปแบบที่ ${_selectedPreset + 1}' : 'Preset ${_selectedPreset + 1}';
+    final fallbackName = isThai
+        ? 'รูปแบบที่ ${_selectedPreset + 1}'
+        : 'Preset ${_selectedPreset + 1}';
     final newName = name.isEmpty ? fallbackName : name;
     setState(() {
       _presets[_selectedPreset] = _PresetSlot(
@@ -533,26 +561,29 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
             ? _StepMode.checksum
             : (modeRaw.toUpperCase() == 'TIME' ? _StepMode.time : null);
         final collapsed = (item['collapsed'] as bool?) ?? false;
-        final showOptions = (item['showOptions'] as bool?) ?? (parsedMode != null);
-        _steps.add(_StepData(
-          id: nextId++,
-          mode: parsedMode,
-          kp: (item['kp'] as String?) ?? '0',
-          kd: (item['kd'] as String?) ?? '0',
-          speed: (item['speed'] as String?) ?? '0',
-          value: (item['value'] as String?) ?? '0',
-          afterMs: (item['afterMs'] as String?) ?? '0',
-          afterSpeed: (item['afterSpeed'] as String?) ?? '0',
-          stopMs: (item['stopMs'] as String?) ?? '0',
-          holdMs: (item['holdMs'] as String?) ?? '0',
-          holdThreshold: (item['holdThreshold'] as String?) ?? '0',
-          lineColor: (item['lineColor'] as int?) ?? 0,
-          holdMode: (item['holdMode'] as int?) ?? 0,
-          continueAfter: continueAfter,
-          stopBetween: (item['stopBetween'] as bool?) ?? false,
-          collapsed: collapsed,
-          showOptions: showOptions,
-        ));
+        final showOptions =
+            (item['showOptions'] as bool?) ?? (parsedMode != null);
+        _steps.add(
+          _StepData(
+            id: nextId++,
+            mode: parsedMode,
+            kp: (item['kp'] as String?) ?? '0',
+            kd: (item['kd'] as String?) ?? '0',
+            speed: (item['speed'] as String?) ?? '0',
+            value: (item['value'] as String?) ?? '0',
+            afterMs: (item['afterMs'] as String?) ?? '0',
+            afterSpeed: (item['afterSpeed'] as String?) ?? '0',
+            stopMs: (item['stopMs'] as String?) ?? '0',
+            holdMs: (item['holdMs'] as String?) ?? '0',
+            holdThreshold: (item['holdThreshold'] as String?) ?? '0',
+            lineColor: (item['lineColor'] as int?) ?? 0,
+            holdMode: (item['holdMode'] as int?) ?? 0,
+            continueAfter: continueAfter,
+            stopBetween: (item['stopBetween'] as bool?) ?? false,
+            collapsed: collapsed,
+            showOptions: showOptions,
+          ),
+        );
       }
       _scheduleAutoSave();
     });
@@ -576,23 +607,23 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
             child: Text(
               isThai
                   ? '1) \u0e40\u0e1e\u0e34\u0e48\u0e21 Step \u0e14\u0e49\u0e27\u0e22\u0e1b\u0e38\u0e48\u0e21 +\n'
-                      '2) \u0e01\u0e33\u0e2b\u0e19\u0e14 KP/KD/Speed \u0e41\u0e25\u0e30\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e42\u0e2b\u0e21\u0e14\n'
-                      '3) \u0e43\u0e2a\u0e48\u0e04\u0e48\u0e32 Time \u0e2b\u0e23\u0e37\u0e2d Target \u0e15\u0e32\u0e21\u0e40\u0e07\u0e37\u0e48\u0e2d\u0e19\u0e44\u0e02\n'
-                      '4) (\u0e16\u0e49\u0e32\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23) \u0e43\u0e2b\u0e49 PD \u0e27\u0e34\u0e48\u0e07\u0e15\u0e48\u0e2d\u0e2b\u0e25\u0e31\u0e07\u0e16\u0e36\u0e07\u0e40\u0e07\u0e37\u0e48\u0e2d\u0e19\u0e44\u0e02\n'
-                      '5) \u0e01\u0e14 \u0e2a\u0e48\u0e07\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14 \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e2a\u0e48\u0e07\u0e25\u0e33\u0e14\u0e31\u0e1a\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14\n'
-                      '6) \u0e01\u0e14 \u0e2a\u0e48\u0e07 PD+Speed \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e08\u0e39\u0e19\u0e23\u0e30\u0e2b\u0e27\u0e48\u0e32\u0e07\u0e27\u0e34\u0e48\u0e07\n'
-                      '7) \u0e40\u0e25\u0e37\u0e2d\u0e01 \u0e40\u0e08\u0e2d\u0e14\u0e33/\u0e40\u0e08\u0e2d\u0e02\u0e32\u0e27 \u0e41\u0e25\u0e30\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32 SUM threshold\n'
-                      '8) \u0e01\u0e33\u0e2b\u0e19\u0e14 Straight (ms) \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e27\u0e34\u0e48\u0e07\u0e15\u0e23\u0e07\u0e41\u0e17\u0e19 PD \u0e40\u0e21\u0e37\u0e48\u0e2d\u0e40\u0e08\u0e2d\u0e1e\u0e37\u0e49\u0e19\u0e17\u0e35\u0e48\u0e2a\u0e35\u0e40\u0e14\u0e35\u0e22\u0e27\n'
-                      '9) \u0e01\u0e14 \u0e2a\u0e27\u0e34\u0e15\u0e0b\u0e4c SW1 \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e40\u0e23\u0e34\u0e48\u0e21 \u0e41\u0e25\u0e30 \u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15\u0e1a\u0e2d\u0e23\u0e4c\u0e14'
+                        '2) \u0e01\u0e33\u0e2b\u0e19\u0e14 KP/KD/Speed \u0e41\u0e25\u0e30\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e42\u0e2b\u0e21\u0e14\n'
+                        '3) \u0e43\u0e2a\u0e48\u0e04\u0e48\u0e32 Time \u0e2b\u0e23\u0e37\u0e2d Target \u0e15\u0e32\u0e21\u0e40\u0e07\u0e37\u0e48\u0e2d\u0e19\u0e44\u0e02\n'
+                        '4) (\u0e16\u0e49\u0e32\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23) \u0e43\u0e2b\u0e49 PD \u0e27\u0e34\u0e48\u0e07\u0e15\u0e48\u0e2d\u0e2b\u0e25\u0e31\u0e07\u0e16\u0e36\u0e07\u0e40\u0e07\u0e37\u0e48\u0e2d\u0e19\u0e44\u0e02\n'
+                        '5) \u0e01\u0e14 \u0e2a\u0e48\u0e07\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14 \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e2a\u0e48\u0e07\u0e25\u0e33\u0e14\u0e31\u0e1a\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14\n'
+                        '6) \u0e01\u0e14 \u0e2a\u0e48\u0e07 PD+Speed \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e08\u0e39\u0e19\u0e23\u0e30\u0e2b\u0e27\u0e48\u0e32\u0e07\u0e27\u0e34\u0e48\u0e07\n'
+                        '7) \u0e40\u0e25\u0e37\u0e2d\u0e01 \u0e40\u0e08\u0e2d\u0e14\u0e33/\u0e40\u0e08\u0e2d\u0e02\u0e32\u0e27 \u0e41\u0e25\u0e30\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32 SUM threshold\n'
+                        '8) \u0e01\u0e33\u0e2b\u0e19\u0e14 Straight (ms) \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e27\u0e34\u0e48\u0e07\u0e15\u0e23\u0e07\u0e41\u0e17\u0e19 PD \u0e40\u0e21\u0e37\u0e48\u0e2d\u0e40\u0e08\u0e2d\u0e1e\u0e37\u0e49\u0e19\u0e17\u0e35\u0e48\u0e2a\u0e35\u0e40\u0e14\u0e35\u0e22\u0e27\n'
+                        '9) \u0e01\u0e14 \u0e2a\u0e27\u0e34\u0e15\u0e0b\u0e4c SW1 \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e40\u0e23\u0e34\u0e48\u0e21 \u0e41\u0e25\u0e30 \u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15\u0e1a\u0e2d\u0e23\u0e4c\u0e14'
                   : '1) Add steps with +\n'
-                      '2) Set KP/KD/Speed and Mode\n'
-                      '3) Use Target/Time value for the condition\n'
-                      '4) (Optional) Continue PD after condition\n'
-                      '5) Send All to update full sequence\n'
-                      '6) Send PD+Speed to tune while running\n'
-                      '7) Choose All Black/All White and set SUM threshold\n'
-                      '8) Set Straight (ms) to drive straight instead of PD\n'
-                      '9) Use SW1 to start, Reset to reboot board',
+                        '2) Set KP/KD/Speed and Mode\n'
+                        '3) Use Target/Time value for the condition\n'
+                        '4) (Optional) Continue PD after condition\n'
+                        '5) Send All to update full sequence\n'
+                        '6) Send PD+Speed to tune while running\n'
+                        '7) Choose All Black/All White and set SUM threshold\n'
+                        '8) Set Straight (ms) to drive straight instead of PD\n'
+                        '9) Use SW1 to start, Reset to reboot board',
             ),
           ),
           actions: [
@@ -648,12 +679,15 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
   }
 
   Widget _buildPlainBackButton(bool isThai) {
+    final metrics = AdaptivePageMetrics.forWidth(
+      MediaQuery.of(context).size.width,
+    );
     return SizedBox(
-      width: 44,
-      height: 44,
+      width: metrics.backButtonSize,
+      height: metrics.backButtonSize,
       child: IconButton(
         tooltip: isThai ? 'กลับ' : 'Back',
-        icon: const Icon(Icons.chevron_left_rounded, size: 30),
+        icon: Icon(Icons.chevron_left_rounded, size: metrics.backIconSize),
         onPressed: () {
           HapticFeedback.selectionClick();
           Navigator.maybePop(context);
@@ -668,6 +702,9 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final metrics = AdaptivePageMetrics.forWidth(
+      MediaQuery.of(context).size.width,
+    );
     final isCompact = MediaQuery.of(context).size.width < 380;
     final sendBg = isDark ? const Color(0xFF38BDF8) : const Color(0xFF2563EB);
     final sendFg = isDark ? const Color(0xFF0B1020) : Colors.white;
@@ -683,7 +720,7 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
         return Scaffold(
           appBar: AppBar(
             automaticallyImplyLeading: false,
-            toolbarHeight: 44,
+            toolbarHeight: metrics.toolbarHeight,
             elevation: 0,
             backgroundColor: Colors.transparent,
             surfaceTintColor: Colors.transparent,
@@ -696,7 +733,7 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
             title: Text(
               'PID Tuning',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: metrics.titleSize,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0,
                 color: scheme.onSurface,
@@ -715,489 +752,663 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
               ),
             ],
           ),
-          body: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isThai ? 'ลำดับภารกิจ' : 'Mission Timeline',
-                        style: t.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
+          body: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: metrics.contentMaxWidth),
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: _openPresetPicker,
-                              borderRadius: BorderRadius.circular(8),
-                              child: InputDecorator(
-                                decoration: InputDecoration(
-                                  label: Text(isThai ? 'ค่าที่ตั้งไว้' : 'Preset'),
-                                  border: const OutlineInputBorder(),
-                                  isDense: true,
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        _presets[_selectedPreset].isEmpty
-                                            ? '${_presets[_selectedPreset].name} (${isThai ? 'ว่าง' : 'empty'})'
-                                            : _presets[_selectedPreset].name,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    const Icon(Icons.arrow_drop_down),
-                                  ],
-                                ),
-                              ),
+                          Text(
+                            isThai ? 'ลำดับภารกิจ' : 'Mission Timeline',
+                            style: t.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          IconButton.filledTonal(
-                            tooltip: isThai ? 'บันทึกพรีเซ็ต' : 'Save preset',
-                            onPressed: _savePresetDialog,
-                            icon: const Icon(Icons.save_outlined),
-                            visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
-                          ),
-                          const SizedBox(width: 4),
-                          IconButton.outlined(
-                            tooltip: isThai ? 'โหลดพรีเซ็ต' : 'Load preset',
-                            onPressed: () => _loadPreset(_selectedPreset),
-                            icon: const Icon(Icons.download_outlined),
-                            visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  onTap: _openPresetPicker,
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: InputDecorator(
+                                    decoration: InputDecoration(
+                                      label: Text(
+                                        isThai ? 'ค่าที่ตั้งไว้' : 'Preset',
+                                      ),
+                                      border: const OutlineInputBorder(),
+                                      isDense: true,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 6,
+                                          ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            _presets[_selectedPreset].isEmpty
+                                                ? '${_presets[_selectedPreset].name} (${isThai ? 'ว่าง' : 'empty'})'
+                                                : _presets[_selectedPreset]
+                                                      .name,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const Icon(Icons.arrow_drop_down),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton.filledTonal(
+                                tooltip: isThai
+                                    ? 'บันทึกพรีเซ็ต'
+                                    : 'Save preset',
+                                onPressed: _savePresetDialog,
+                                icon: const Icon(Icons.save_outlined),
+                                visualDensity: const VisualDensity(
+                                  horizontal: -2,
+                                  vertical: -2,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              IconButton.outlined(
+                                tooltip: isThai ? 'โหลดพรีเซ็ต' : 'Load preset',
+                                onPressed: () => _loadPreset(_selectedPreset),
+                                icon: const Icon(Icons.download_outlined),
+                                visualDensity: const VisualDensity(
+                                  horizontal: -2,
+                                  vertical: -2,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              SliverReorderableList(
-                itemCount: _steps.length,
-                onReorderItem: (oldIndex, newIndex) {
-                  setState(() {
-                    final item = _steps.removeAt(oldIndex);
-                    _steps.insert(newIndex, item);
-                    _scheduleAutoSave();
-                  });
-                },
-                itemBuilder: (context, index) {
-                  final step = _steps[index];
-                  final hasMode = step.mode != null;
-                  final isTime = step.mode == _StepMode.time;
-                  final isCollapsed = step.collapsed;
-                  final modeLabel = hasMode
-                      ? (isTime
-                          ? (isThai ? 'เวลา' : 'Time')
-                          : (isThai ? 'เช็กผลรวม' : 'CheckSum'))
-                      : '';
-                  final tone = hasMode
-                      ? (isTime ? const Color(0xFF3B82F6) : const Color(0xFFF59E0B))
-                      : (isDark ? const Color(0xFF4B5563) : const Color(0xFF94A3B8));
-                  final toneBg = hasMode
-                      ? (isTime
-                          ? (isDark ? const Color(0xFF0B1D3A) : const Color(0xFFEFF6FF))
-                          : (isDark ? const Color(0xFF3A2500) : const Color(0xFFFFF7ED)))
-                      : (isDark ? const Color(0xFF111827) : const Color(0xFFF1F5F9));
+                  SliverReorderableList(
+                    itemCount: _steps.length,
+                    onReorderItem: (oldIndex, newIndex) {
+                      setState(() {
+                        final item = _steps.removeAt(oldIndex);
+                        _steps.insert(newIndex, item);
+                        _scheduleAutoSave();
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final step = _steps[index];
+                      final hasMode = step.mode != null;
+                      final isTime = step.mode == _StepMode.time;
+                      final isCollapsed = step.collapsed;
+                      final modeLabel = hasMode
+                          ? (isTime
+                                ? (isThai ? 'เวลา' : 'Time')
+                                : (isThai ? 'เช็กผลรวม' : 'CheckSum'))
+                          : '';
+                      final tone = hasMode
+                          ? (isTime
+                                ? const Color(0xFF3B82F6)
+                                : const Color(0xFFF59E0B))
+                          : (isDark
+                                ? const Color(0xFF4B5563)
+                                : const Color(0xFF94A3B8));
+                      final toneBg = hasMode
+                          ? (isTime
+                                ? (isDark
+                                      ? const Color(0xFF0B1D3A)
+                                      : const Color(0xFFEFF6FF))
+                                : (isDark
+                                      ? const Color(0xFF3A2500)
+                                      : const Color(0xFFFFF7ED)))
+                          : (isDark
+                                ? const Color(0xFF111827)
+                                : const Color(0xFFF1F5F9));
 
-                  return Material(
-                    key: ValueKey(step.id),
-                    color: toneBg,
-                    elevation: 0,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Container(
-                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                      decoration: BoxDecoration(
+                      return Material(
+                        key: ValueKey(step.id),
+                        color: toneBg,
+                        elevation: 0,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: tone.withValues(alpha: isDark ? 0.5 : 0.35)),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  step.collapsed = !step.collapsed;
-                                  _scheduleAutoSave();
-                                });
-                              },
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: tone,
-                                            borderRadius: BorderRadius.circular(999),
-                                          ),
-                                          child: Text(
-                                            '${isThai ? 'ขั้นตอน' : 'Step'} ${index + 1}${modeLabel.isEmpty ? '' : ' ($modeLabel)'}',
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Icon(
-                                          isCollapsed ? Icons.expand_more : Icons.expand_less,
-                                          size: 18,
-                                          color: tone,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        tooltip: isThai ? 'ทำซ้ำ' : 'Duplicate',
-                                        onPressed: () => _duplicateStep(index),
-                                        icon: const Icon(Icons.copy_all_outlined),
-                                        iconSize: 18,
-                                        visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
-                                      ),
-                                      IconButton(
-                                        tooltip: isThai ? 'ลบ' : 'Delete',
-                                        onPressed: () => _deleteStep(index),
-                                        icon: const Icon(Icons.delete_outline),
-                                        iconSize: 18,
-                                        visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
-                                      ),
-                                      IconButton(
-                                        tooltip: isThai ? 'เลื่อนขึ้น' : 'Move up',
-                                        onPressed: index == 0
-                                            ? null
-                                            : () {
-                                                setState(() {
-                                                  final item = _steps.removeAt(index);
-                                                  _steps.insert(index - 1, item);
-                                                  _scheduleAutoSave();
-                                                });
-                                              },
-                                        icon: const Icon(Icons.keyboard_arrow_up),
-                                        iconSize: 20,
-                                        visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
-                                      ),
-                                      IconButton(
-                                        tooltip: isThai ? 'เลื่อนลง' : 'Move down',
-                                        onPressed: index == _steps.length - 1
-                                            ? null
-                                            : () {
-                                                setState(() {
-                                                  final item = _steps.removeAt(index);
-                                                  _steps.insert(index + 1, item);
-                                                  _scheduleAutoSave();
-                                                });
-                                              },
-                                        icon: const Icon(Icons.keyboard_arrow_down),
-                                        iconSize: 20,
-                                        visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                        child: Container(
+                          margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: tone.withValues(
+                                alpha: isDark ? 0.5 : 0.35,
                               ),
                             ),
-                            Column(
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (isCollapsed) ...[
-                                  const SizedBox(height: 6),
-                                  Row(
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      step.collapsed = !step.collapsed;
+                                      _scheduleAutoSave();
+                                    });
+                                  },
+                                  child: Row(
                                     children: [
                                       Expanded(
-                                        child: _ValuePill(
-                                          label: 'KP',
-                                          value: _numOrZero(step.kpCtrl.text),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: _ValuePill(
-                                          label: 'KD',
-                                          value: _numOrZero(step.kdCtrl.text),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: _ValuePill(
-                                          label: isThai ? 'ความเร็ว' : 'Speed',
-                                          value: _numOrZero(step.speedCtrl.text),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                                if (!isCollapsed) ...[
-                                  const SizedBox(height: 8),
-                                  if (isCompact) ...[
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _NumberField(
-                                            label: 'KP',
-                                            controller: step.kpCtrl,
-                                            onChanged: _scheduleAutoSave,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: _NumberField(
-                                            label: 'KD',
-                                            controller: step.kdCtrl,
-                                            onChanged: _scheduleAutoSave,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _NumberField(
-                                      label: isThai ? 'ความเร็ว' : 'Speed',
-                                      controller: step.speedCtrl,
-                                      onChanged: _onSpeedChanged,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _PresetChips(
-                                      values: const ['0','10','20','30','40','50','60','70','80','90','100'],
-                                      controller: step.speedCtrl,
-                                      onChanged: _onSpeedChanged,
-                                    ),
-                                  ] else ...[
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _NumberField(
-                                            label: 'KP',
-                                            controller: step.kpCtrl,
-                                            onChanged: _scheduleAutoSave,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: _NumberField(
-                                            label: 'KD',
-                                            controller: step.kdCtrl,
-                                            onChanged: _scheduleAutoSave,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: _NumberField(
-                                            label: isThai ? 'ความเร็ว' : 'Speed',
-                                            controller: step.speedCtrl,
-                                            onChanged: _onSpeedChanged,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _PresetChips(
-                                      values: const ['0','10','20','30','40','50','60','70','80','90','100'],
-                                      controller: step.speedCtrl,
-                                      onChanged: _onSpeedChanged,
-                                    ),
-                                  ],
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        isThai ? 'สีเส้น' : 'Line color',
-                                        style: Theme.of(context).textTheme.bodySmall,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: SegmentedButton<int>(
-                                          segments: [
-                                            ButtonSegment(
-                                              value: 0,
-                                              label: Text(
-                                                isThai ? 'ดำ' : 'Black',
-                                                style: const TextStyle(fontSize: 10),
-                                              ),
-                                            ),
-                                            ButtonSegment(
-                                              value: 1,
-                                              label: Text(
-                                                isThai ? 'ขาว' : 'White',
-                                                style: const TextStyle(fontSize: 10),
-                                              ),
-                                            ),
-                                          ],
-                                          selected: <int>{step.lineColor},
-                                          style: const ButtonStyle(
-                                            visualDensity: VisualDensity(horizontal: -2, vertical: -2),
-                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                            padding: WidgetStatePropertyAll(
-                                              EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                            ),
-                                          ),
-                                          onSelectionChanged: (s) {
-                                            if (s.isEmpty) return;
-                                            setState(() {
-                                              step.lineColor = s.first;
-                                              _scheduleAutoSave();
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        isThai ? 'โหมด' : 'Mode',
-                                        style: Theme.of(context).textTheme.bodySmall,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: SegmentedButton<_StepMode>(
-                                          segments: [
-                                            ButtonSegment(
-                                              value: _StepMode.time,
-                                              label: Text(
-                                                isThai ? 'เวลา' : 'Time',
-                                                style: const TextStyle(fontSize: 10),
-                                              ),
-                                            ),
-                                            ButtonSegment(
-                                              value: _StepMode.checksum,
-                                              label: Text(
-                                                isThai ? 'เช็กผลรวม' : 'CheckSum',
-                                                style: const TextStyle(fontSize: 10),
-                                              ),
-                                            ),
-                                          ],
-                                          emptySelectionAllowed: true,
-                                          selected: step.mode == null
-                                              ? const <_StepMode>{}
-                                              : <_StepMode>{step.mode!},
-                                          style: const ButtonStyle(
-                                            visualDensity: VisualDensity(horizontal: -2, vertical: -2),
-                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                            padding: WidgetStatePropertyAll(
-                                              EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                            ),
-                                          ),
-                                          onSelectionChanged: (s) {
-                                            setState(() {
-                                              if (s.isEmpty) {
-                                                // Toggle options visibility without clearing mode
-                                                step.showOptions = !step.showOptions;
-                                              } else {
-                                                final nextMode = s.first;
-                                                if (step.mode != nextMode) {
-                                                  step.mode = nextMode;
-                                                  step.valueCtrl.text = '0';
-                                                }
-                                                step.showOptions = true;
-                                              }
-                                              _scheduleAutoSave();
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Icon(
-                                        step.showOptions ? Icons.expand_less : Icons.expand_more,
-                                        size: 16,
-                                        color: tone,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (step.mode != null && step.showOptions) ...[
-                                    _NumberField(
-                                      label: isTime
-                                          ? (isThai ? '\u0e21\u0e34\u0e25\u0e25\u0e34\u0e27\u0e34\u0e19\u0e32\u0e17\u0e35 (ms)' : 'Milliseconds (ms)')
-                                          : (isThai ? '\u0e08\u0e33\u0e19\u0e27\u0e19\u0e40\u0e2a\u0e49\u0e19 / \u0e04\u0e48\u0e32\u0e40\u0e1b\u0e49\u0e32\u0e2b\u0e21\u0e32\u0e22' : 'Line Count / Target'),
-                                      controller: step.valueCtrl,
-                                      onChanged: _scheduleAutoSave,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: SegmentedButton<int>(
-                                            segments: [
-                                              ButtonSegment(
-                                                value: 0,
-                                                label: Text(
-                                                  isThai ? 'ปิด' : 'Off',
-                                                  style: const TextStyle(fontSize: 10),
-                                                ),
-                                              ),
-                                              ButtonSegment(
-                                                value: 1,
-                                                label: Text(
-                                                  isThai ? 'เจอดำ' : 'All Black',
-                                                  style: const TextStyle(fontSize: 10),
-                                                ),
-                                              ),
-                                              ButtonSegment(
-                                                value: 2,
-                                                label: Text(
-                                                  isThai ? 'เจอขาว' : 'All White',
-                                                  style: const TextStyle(fontSize: 10),
-                                                ),
-                                              ),
-                                            ],
-                                            selected: <int>{step.holdMode},
-                                            style: const ButtonStyle(
-                                              visualDensity: VisualDensity(horizontal: -2, vertical: -2),
-                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                              padding: WidgetStatePropertyAll(
-                                                EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                              ),
-                                            ),
-                                            onSelectionChanged: (s) {
-                                              if (s.isEmpty) return;
-                                              setState(() {
-                                                step.holdMode = s.first;
-                                                _scheduleAutoSave();
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    IgnorePointer(
-                                      ignoring: step.holdMode == 0,
-                                      child: Opacity(
-                                        opacity: step.holdMode == 0 ? 0.4 : 1.0,
-                                        child: Column(
+                                        child: Row(
                                           children: [
-                                            _NumberField(
-                                              label: isThai ? '\u0e40\u0e14\u0e34\u0e19\u0e15\u0e23\u0e07 (ms)' : 'Straight (ms)',
-                                              controller: step.holdMsCtrl,
-                                              onChanged: _scheduleAutoSave,
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: tone,
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                              ),
+                                              child: Text(
+                                                '${isThai ? 'ขั้นตอน' : 'Step'} ${index + 1}${modeLabel.isEmpty ? '' : ' ($modeLabel)'}',
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
                                             ),
-                                            const SizedBox(height: 6),
-                                            _NumberField(
-                                              label: isThai ? '\u0e04\u0e48\u0e32\u0e40\u0e01\u0e13\u0e11\u0e4c SUM' : 'SUM threshold',
-                                              controller: step.holdThresholdCtrl,
-                                              onChanged: _scheduleAutoSave,
+                                            const SizedBox(width: 6),
+                                            Icon(
+                                              isCollapsed
+                                                  ? Icons.expand_more
+                                                  : Icons.expand_less,
+                                              size: 18,
+                                              color: tone,
                                             ),
                                           ],
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      children: [
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            tooltip: isThai
+                                                ? 'ทำซ้ำ'
+                                                : 'Duplicate',
+                                            onPressed: () =>
+                                                _duplicateStep(index),
+                                            icon: const Icon(
+                                              Icons.copy_all_outlined,
+                                            ),
+                                            iconSize: 18,
+                                            visualDensity: const VisualDensity(
+                                              horizontal: -2,
+                                              vertical: -2,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            tooltip: isThai ? 'ลบ' : 'Delete',
+                                            onPressed: () => _deleteStep(index),
+                                            icon: const Icon(
+                                              Icons.delete_outline,
+                                            ),
+                                            iconSize: 18,
+                                            visualDensity: const VisualDensity(
+                                              horizontal: -2,
+                                              vertical: -2,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            tooltip: isThai
+                                                ? 'เลื่อนขึ้น'
+                                                : 'Move up',
+                                            onPressed: index == 0
+                                                ? null
+                                                : () {
+                                                    setState(() {
+                                                      final item = _steps
+                                                          .removeAt(index);
+                                                      _steps.insert(
+                                                        index - 1,
+                                                        item,
+                                                      );
+                                                      _scheduleAutoSave();
+                                                    });
+                                                  },
+                                            icon: const Icon(
+                                              Icons.keyboard_arrow_up,
+                                            ),
+                                            iconSize: 20,
+                                            visualDensity: const VisualDensity(
+                                              horizontal: -2,
+                                              vertical: -2,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            tooltip: isThai
+                                                ? 'เลื่อนลง'
+                                                : 'Move down',
+                                            onPressed:
+                                                index == _steps.length - 1
+                                                ? null
+                                                : () {
+                                                    setState(() {
+                                                      final item = _steps
+                                                          .removeAt(index);
+                                                      _steps.insert(
+                                                        index + 1,
+                                                        item,
+                                                      );
+                                                      _scheduleAutoSave();
+                                                    });
+                                                  },
+                                            icon: const Icon(
+                                              Icons.keyboard_arrow_down,
+                                            ),
+                                            iconSize: 20,
+                                            visualDensity: const VisualDensity(
+                                              horizontal: -2,
+                                              vertical: -2,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  children: [
+                                    if (isCollapsed) ...[
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _ValuePill(
+                                              label: 'KP',
+                                              value: _numOrZero(
+                                                step.kpCtrl.text,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: _ValuePill(
+                                              label: 'KD',
+                                              value: _numOrZero(
+                                                step.kdCtrl.text,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: _ValuePill(
+                                              label: isThai
+                                                  ? 'ความเร็ว'
+                                                  : 'Speed',
+                                              value: _numOrZero(
+                                                step.speedCtrl.text,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                    if (!isCollapsed) ...[
+                                      const SizedBox(height: 8),
+                                      if (isCompact) ...[
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: _NumberField(
+                                                label: 'KP',
+                                                controller: step.kpCtrl,
+                                                onChanged: _scheduleAutoSave,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: _NumberField(
+                                                label: 'KD',
+                                                controller: step.kdCtrl,
+                                                onChanged: _scheduleAutoSave,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        _NumberField(
+                                          label: isThai ? 'ความเร็ว' : 'Speed',
+                                          controller: step.speedCtrl,
+                                          onChanged: _onSpeedChanged,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        _PresetChips(
+                                          values: const [
+                                            '0',
+                                            '10',
+                                            '20',
+                                            '30',
+                                            '40',
+                                            '50',
+                                            '60',
+                                            '70',
+                                            '80',
+                                            '90',
+                                            '100',
+                                          ],
+                                          controller: step.speedCtrl,
+                                          onChanged: _onSpeedChanged,
+                                        ),
+                                      ] else ...[
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: _NumberField(
+                                                label: 'KP',
+                                                controller: step.kpCtrl,
+                                                onChanged: _scheduleAutoSave,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: _NumberField(
+                                                label: 'KD',
+                                                controller: step.kdCtrl,
+                                                onChanged: _scheduleAutoSave,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: _NumberField(
+                                                label: isThai
+                                                    ? 'ความเร็ว'
+                                                    : 'Speed',
+                                                controller: step.speedCtrl,
+                                                onChanged: _onSpeedChanged,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        _PresetChips(
+                                          values: const [
+                                            '0',
+                                            '10',
+                                            '20',
+                                            '30',
+                                            '40',
+                                            '50',
+                                            '60',
+                                            '70',
+                                            '80',
+                                            '90',
+                                            '100',
+                                          ],
+                                          controller: step.speedCtrl,
+                                          onChanged: _onSpeedChanged,
+                                        ),
+                                      ],
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            isThai ? 'สีเส้น' : 'Line color',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: SegmentedButton<int>(
+                                              segments: [
+                                                ButtonSegment(
+                                                  value: 0,
+                                                  label: Text(
+                                                    isThai ? 'ดำ' : 'Black',
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                    ),
+                                                  ),
+                                                ),
+                                                ButtonSegment(
+                                                  value: 1,
+                                                  label: Text(
+                                                    isThai ? 'ขาว' : 'White',
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                              selected: <int>{step.lineColor},
+                                              style: const ButtonStyle(
+                                                visualDensity: VisualDensity(
+                                                  horizontal: -2,
+                                                  vertical: -2,
+                                                ),
+                                                tapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                                padding: WidgetStatePropertyAll(
+                                                  EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 6,
+                                                  ),
+                                                ),
+                                              ),
+                                              onSelectionChanged: (s) {
+                                                if (s.isEmpty) return;
+                                                setState(() {
+                                                  step.lineColor = s.first;
+                                                  _scheduleAutoSave();
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            isThai ? 'โหมด' : 'Mode',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: SegmentedButton<_StepMode>(
+                                              segments: [
+                                                ButtonSegment(
+                                                  value: _StepMode.time,
+                                                  label: Text(
+                                                    isThai ? 'เวลา' : 'Time',
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                    ),
+                                                  ),
+                                                ),
+                                                ButtonSegment(
+                                                  value: _StepMode.checksum,
+                                                  label: Text(
+                                                    isThai
+                                                        ? 'เช็กผลรวม'
+                                                        : 'CheckSum',
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                              emptySelectionAllowed: true,
+                                              selected: step.mode == null
+                                                  ? const <_StepMode>{}
+                                                  : <_StepMode>{step.mode!},
+                                              style: const ButtonStyle(
+                                                visualDensity: VisualDensity(
+                                                  horizontal: -2,
+                                                  vertical: -2,
+                                                ),
+                                                tapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                                padding: WidgetStatePropertyAll(
+                                                  EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 6,
+                                                  ),
+                                                ),
+                                              ),
+                                              onSelectionChanged: (s) {
+                                                setState(() {
+                                                  if (s.isEmpty) {
+                                                    // Toggle options visibility without clearing mode
+                                                    step.showOptions =
+                                                        !step.showOptions;
+                                                  } else {
+                                                    final nextMode = s.first;
+                                                    if (step.mode != nextMode) {
+                                                      step.mode = nextMode;
+                                                      step.valueCtrl.text = '0';
+                                                    }
+                                                    step.showOptions = true;
+                                                  }
+                                                  _scheduleAutoSave();
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Icon(
+                                            step.showOptions
+                                                ? Icons.expand_less
+                                                : Icons.expand_more,
+                                            size: 16,
+                                            color: tone,
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      if (step.mode != null &&
+                                          step.showOptions) ...[
+                                        _NumberField(
+                                          label: isTime
+                                              ? (isThai
+                                                    ? '\u0e21\u0e34\u0e25\u0e25\u0e34\u0e27\u0e34\u0e19\u0e32\u0e17\u0e35 (ms)'
+                                                    : 'Milliseconds (ms)')
+                                              : (isThai
+                                                    ? '\u0e08\u0e33\u0e19\u0e27\u0e19\u0e40\u0e2a\u0e49\u0e19 / \u0e04\u0e48\u0e32\u0e40\u0e1b\u0e49\u0e32\u0e2b\u0e21\u0e32\u0e22'
+                                                    : 'Line Count / Target'),
+                                          controller: step.valueCtrl,
+                                          onChanged: _scheduleAutoSave,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: SegmentedButton<int>(
+                                                segments: [
+                                                  ButtonSegment(
+                                                    value: 0,
+                                                    label: Text(
+                                                      isThai ? 'ปิด' : 'Off',
+                                                      style: const TextStyle(
+                                                        fontSize: 10,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  ButtonSegment(
+                                                    value: 1,
+                                                    label: Text(
+                                                      isThai
+                                                          ? 'เจอดำ'
+                                                          : 'All Black',
+                                                      style: const TextStyle(
+                                                        fontSize: 10,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  ButtonSegment(
+                                                    value: 2,
+                                                    label: Text(
+                                                      isThai
+                                                          ? 'เจอขาว'
+                                                          : 'All White',
+                                                      style: const TextStyle(
+                                                        fontSize: 10,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                                selected: <int>{step.holdMode},
+                                                style: const ButtonStyle(
+                                                  visualDensity: VisualDensity(
+                                                    horizontal: -2,
+                                                    vertical: -2,
+                                                  ),
+                                                  tapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                  padding:
+                                                      WidgetStatePropertyAll(
+                                                        EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 6,
+                                                        ),
+                                                      ),
+                                                ),
+                                                onSelectionChanged: (s) {
+                                                  if (s.isEmpty) return;
+                                                  setState(() {
+                                                    step.holdMode = s.first;
+                                                    _scheduleAutoSave();
+                                                  });
+                                                },
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        IgnorePointer(
+                                          ignoring: step.holdMode == 0,
+                                          child: Opacity(
+                                            opacity: step.holdMode == 0
+                                                ? 0.4
+                                                : 1.0,
+                                            child: Column(
+                                              children: [
+                                                _NumberField(
+                                                  label: isThai
+                                                      ? '\u0e40\u0e14\u0e34\u0e19\u0e15\u0e23\u0e07 (ms)'
+                                                      : 'Straight (ms)',
+                                                  controller: step.holdMsCtrl,
+                                                  onChanged: _scheduleAutoSave,
+                                                ),
+                                                const SizedBox(height: 6),
+                                                _NumberField(
+                                                  label: isThai
+                                                      ? '\u0e04\u0e48\u0e32\u0e40\u0e01\u0e13\u0e11\u0e4c SUM'
+                                                      : 'SUM threshold',
+                                                  controller:
+                                                      step.holdThresholdCtrl,
+                                                  onChanged: _scheduleAutoSave,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
                                             Transform.scale(
                                               scale: 0.65,
                                               child: Switch(
@@ -1208,43 +1419,56 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
                                                     _scheduleAutoSave();
                                                   });
                                                 },
-                                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                materialTapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
                                               ),
                                             ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: Text(
-                                            isThai ? '\u0e27\u0e34\u0e48\u0e07\u0e15\u0e48\u0e2d\u0e2b\u0e25\u0e31\u0e07\u0e16\u0e36\u0e07\u0e40\u0e07\u0e37\u0e48\u0e2d\u0e19\u0e44\u0e02' : 'Continue PD after condition',
-                                            style: Theme.of(context).textTheme.bodySmall,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    IgnorePointer(
-                                      ignoring: !step.continueAfter,
-                                      child: Opacity(
-                                        opacity: step.continueAfter ? 1.0 : 0.4,
-                                        child: Column(
-                                          children: [
-                                            _NumberField(
-                                              label: isThai ? '\u0e27\u0e34\u0e48\u0e07\u0e15\u0e48\u0e2d (ms)' : 'Continue (ms)',
-                                              controller: step.afterMsCtrl,
-                                              onChanged: _scheduleAutoSave,
-                                            ),
-                                            const SizedBox(height: 6),
-                                            _NumberField(
-                                              label: isThai ? '\u0e04\u0e27\u0e32\u0e21\u0e40\u0e23\u0e47\u0e27\u0e15\u0e48\u0e2d' : 'Continue Speed',
-                                              controller: step.afterSpeedCtrl,
-                                              onChanged: _scheduleAutoSave,
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: Text(
+                                                isThai
+                                                    ? '\u0e27\u0e34\u0e48\u0e07\u0e15\u0e48\u0e2d\u0e2b\u0e25\u0e31\u0e07\u0e16\u0e36\u0e07\u0e40\u0e07\u0e37\u0e48\u0e2d\u0e19\u0e44\u0e02'
+                                                    : 'Continue PD after condition',
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.bodySmall,
+                                              ),
                                             ),
                                           ],
                                         ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      children: [
+                                        const SizedBox(height: 6),
+                                        IgnorePointer(
+                                          ignoring: !step.continueAfter,
+                                          child: Opacity(
+                                            opacity: step.continueAfter
+                                                ? 1.0
+                                                : 0.4,
+                                            child: Column(
+                                              children: [
+                                                _NumberField(
+                                                  label: isThai
+                                                      ? '\u0e27\u0e34\u0e48\u0e07\u0e15\u0e48\u0e2d (ms)'
+                                                      : 'Continue (ms)',
+                                                  controller: step.afterMsCtrl,
+                                                  onChanged: _scheduleAutoSave,
+                                                ),
+                                                const SizedBox(height: 6),
+                                                _NumberField(
+                                                  label: isThai
+                                                      ? '\u0e04\u0e27\u0e32\u0e21\u0e40\u0e23\u0e47\u0e27\u0e15\u0e48\u0e2d'
+                                                      : 'Continue Speed',
+                                                  controller:
+                                                      step.afterSpeedCtrl,
+                                                  onChanged: _scheduleAutoSave,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
                                             Transform.scale(
                                               scale: 0.65,
                                               child: Switch(
@@ -1255,125 +1479,156 @@ class _LineSonicPidPageState extends State<LineSonicPidPage> {
                                                     _scheduleAutoSave();
                                                   });
                                                 },
-                                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                materialTapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
                                               ),
                                             ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: Text(
-                                            isThai ? '\u0e2b\u0e22\u0e38\u0e14\u0e01\u0e48\u0e2d\u0e19 Step \u0e16\u0e31\u0e14\u0e44\u0e1b' : 'Stop before next step',
-                                            style: Theme.of(context).textTheme.bodySmall,
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: Text(
+                                                isThai
+                                                    ? '\u0e2b\u0e22\u0e38\u0e14\u0e01\u0e48\u0e2d\u0e19 Step \u0e16\u0e31\u0e14\u0e44\u0e1b'
+                                                    : 'Stop before next step',
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.bodySmall,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        IgnorePointer(
+                                          ignoring: !step.stopBetween,
+                                          child: Opacity(
+                                            opacity: step.stopBetween
+                                                ? 1.0
+                                                : 0.4,
+                                            child: _NumberField(
+                                              label: isThai
+                                                  ? '\u0e2b\u0e22\u0e38\u0e14 (ms)'
+                                                  : 'Stop (ms)',
+                                              controller: step.stopMsCtrl,
+                                              onChanged: _scheduleAutoSave,
+                                            ),
                                           ),
                                         ),
                                       ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    IgnorePointer(
-                                      ignoring: !step.stopBetween,
-                                      child: Opacity(
-                                        opacity: step.stopBetween ? 1.0 : 0.4,
-                                        child: _NumberField(
-                                          label: isThai ? '\u0e2b\u0e22\u0e38\u0e14 (ms)' : 'Stop (ms)',
-                                          controller: step.stopMsCtrl,
-                                          onChanged: _scheduleAutoSave,
-                                        ),
-                                      ),
-                                    ),
+                                    ],
                                   ],
-                                ],
+                                ),
                               ],
                             ),
-                          ],
+                          ),
                         ),
+                      );
+                    },
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 48,
+                                  child: ElevatedButton.icon(
+                                    onPressed: _sending ? null : _sendSequence,
+                                    icon: const Icon(Icons.send),
+                                    label: Text(
+                                      isThai
+                                          ? '\u0e2a\u0e48\u0e07\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14'
+                                          : 'Send All',
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: sendBg,
+                                      foregroundColor: sendFg,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 44,
+                                  child: FilledButton.tonalIcon(
+                                    onPressed: _sending
+                                        ? null
+                                        : _sendSequencePd,
+                                    icon: const Icon(Icons.tune),
+                                    label: Text(
+                                      isThai
+                                          ? '\u0e2a\u0e48\u0e07 PD+Speed'
+                                          : 'Send PD+Speed',
+                                    ),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: pdBg,
+                                      foregroundColor: pdFg,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 40,
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: sw1Fg,
+                                      side: BorderSide(color: sw1Fg),
+                                    ),
+                                    onPressed: _sending ? null : _sendSW1,
+                                    icon: const Icon(Icons.touch_app, size: 18),
+                                    label: Text(
+                                      isThai
+                                          ? '\u0e2a\u0e27\u0e34\u0e15\u0e0b\u0e4c SW1'
+                                          : 'SW1',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 40,
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: resetFg,
+                                      side: BorderSide(color: resetFg),
+                                    ),
+                                    onPressed: _sending ? null : _sendReset,
+                                    icon: const Icon(
+                                      Icons.power_settings_new,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      isThai
+                                          ? '\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15\u0e1a\u0e2d\u0e23\u0e4c\u0e14'
+                                          : 'Reset Board',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 48,
-                              child: ElevatedButton.icon(
-                                onPressed: _sending ? null : _sendSequence,
-                                icon: const Icon(Icons.send),
-                                label: Text(isThai ? '\u0e2a\u0e48\u0e07\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14' : 'Send All'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: sendBg,
-                                  foregroundColor: sendFg,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 44,
-                              child: FilledButton.tonalIcon(
-                                onPressed: _sending ? null : _sendSequencePd,
-                                icon: const Icon(Icons.tune),
-                                label: Text(isThai ? '\u0e2a\u0e48\u0e07 PD+Speed' : 'Send PD+Speed'),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: pdBg,
-                                  foregroundColor: pdFg,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 40,
-                              child: OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: sw1Fg,
-                                  side: BorderSide(color: sw1Fg),
-                                ),
-                                onPressed: _sending ? null : _sendSW1,
-                                icon: const Icon(Icons.touch_app, size: 18),
-                                label: Text(isThai ? '\u0e2a\u0e27\u0e34\u0e15\u0e0b\u0e4c SW1' : 'SW1'),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: SizedBox(
-                              height: 40,
-                              child: OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: resetFg,
-                                  side: BorderSide(color: resetFg),
-                                ),
-                                onPressed: _sending ? null : _sendReset,
-                                icon: const Icon(Icons.power_settings_new, size: 18),
-                                label: Text(isThai ? '\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15\u0e1a\u0e2d\u0e23\u0e4c\u0e14' : 'Reset Board'),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
                   ),
-                ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                ],
               ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ),
-            ],
+            ),
           ),
           floatingActionButton: FloatingActionButton.extended(
             heroTag: 'add_step_linesonic_pid',
@@ -1433,15 +1688,11 @@ class _NumberField extends StatelessWidget {
   }
 }
 
-
 class _ValuePill extends StatelessWidget {
   final String label;
   final String value;
 
-  const _ValuePill({
-    required this.label,
-    required this.value,
-  });
+  const _ValuePill({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -1449,7 +1700,9 @@ class _ValuePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.15,
+        ),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: theme.dividerColor.withValues(alpha: 0.4)),
       ),
@@ -1457,14 +1710,17 @@ class _ValuePill extends StatelessWidget {
         children: [
           Text(
             '$label ',
-            style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600, fontSize: 11),
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
           ),
           Expanded(
             child: Text(
               value,
               textAlign: TextAlign.right,
               overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+              style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
             ),
           ),
         ],
@@ -1496,7 +1752,9 @@ class _PresetChips extends StatelessWidget {
           label: Text(v, style: const TextStyle(fontSize: 10)),
           selected: selected,
           showCheckmark: false,
-          selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+          selectedColor: Theme.of(
+            context,
+          ).colorScheme.primary.withValues(alpha: 0.2),
           labelPadding: const EdgeInsets.symmetric(horizontal: 4),
           visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -1509,7 +1767,3 @@ class _PresetChips extends StatelessWidget {
     );
   }
 }
-
-
-
-

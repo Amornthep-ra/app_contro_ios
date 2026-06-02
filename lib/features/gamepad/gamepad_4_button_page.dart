@@ -358,6 +358,7 @@ class _Gamepad4ButtonPageState extends State<Gamepad4ButtonPage> {
   int _tutorialStep = 0;
   bool _tutorialThai = true;
   bool _tutorialSpeedPanelOpen = false;
+  bool _restoreAutoOrientationOnExit = false;
   late final VoidCallback _langListener;
   Rect? _tutorialTargetRect;
   GlobalKey? _tutorialTargetKey;
@@ -1700,6 +1701,14 @@ class _Gamepad4ButtonPageState extends State<Gamepad4ButtonPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _restoreAutoOrientationOnExit =
+        MediaQuery.sizeOf(context).shortestSide >=
+        OrientationUtils.tabletShortestSide;
+  }
+
+  @override
   void dispose() {
     _editWarningTimer?.cancel();
     _tick?.cancel();
@@ -1722,7 +1731,9 @@ class _Gamepad4ButtonPageState extends State<Gamepad4ButtonPage> {
     } else if (trafficOwner != null) {
       BleManager.instance.releaseTrafficMode(trafficOwner);
     }
-    OrientationUtils.reset();
+    OrientationUtils.restoreAfterControl(
+      isTablet: _restoreAutoOrientationOnExit,
+    );
     super.dispose();
   }
 
@@ -1857,7 +1868,10 @@ class _Gamepad4ButtonPageState extends State<Gamepad4ButtonPage> {
     final isDark = theme.brightness == Brightness.dark;
     final media = MediaQuery.of(context);
     final panelWidth = math.min(media.size.width - 24, 168.0);
-    final panelTop = media.padding.top + GamepadAppBarMetrics.toolbarHeight + 6;
+    final panelTop =
+        media.padding.top +
+        GamepadAppBarMetrics.forWidth(media.size.width).toolbarExtent +
+        6;
     final panelBg = isDark
         ? _opacity(const Color(0xFF020817), 0.78)
         : _opacity(const Color(0xFFF8FAFC), 0.94);
@@ -2210,9 +2224,13 @@ class _Gamepad4ButtonPageState extends State<Gamepad4ButtonPage> {
     final isThai = LanguageController.isThai.value;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final topInset = MediaQuery.of(context).padding.top;
-    final panelTop = topInset + GamepadAppBarMetrics.toolbarHeight + 8;
-    final panelWidth = math.min(MediaQuery.of(context).size.width - 24, 210.0);
+    final media = MediaQuery.of(context);
+    final topInset = media.padding.top;
+    final panelTop =
+        topInset +
+        GamepadAppBarMetrics.forWidth(media.size.width).toolbarExtent +
+        8;
+    final panelWidth = math.min(media.size.width - 24, 210.0);
     return Positioned(
       top: panelTop,
       right: 12,
@@ -3289,6 +3307,7 @@ class _Gamepad4ButtonPageState extends State<Gamepad4ButtonPage> {
         Scaffold(
           extendBodyBehindAppBar: true,
           appBar: GamepadUnifiedAppBar(
+            toolbarHeight: appBarMetrics.toolbarExtent,
             leading: _editMode ? null : _buildAppBarBackButton(),
             speedToggle: _editMode
                 ? _buildEditAppBarRow(
@@ -3710,6 +3729,19 @@ Map<String, _ButtonLayout> _defaultLayoutForIds(
   final hasRight = ids.contains('F:right');
 
   final out = <String, _ButtonLayout>{};
+
+  if (hasForward && hasBackward && hasLeft && hasRight) {
+    const centerX = 0.50;
+    const centerY = 0.50;
+    final horizontalStep = size.width < 700 ? 0.19 : 0.17;
+    final verticalStep = size.height < 520 ? 0.28 : 0.22;
+    return {
+      'F:forward': _ButtonLayout(centerX, centerY - verticalStep, 0.30),
+      'F:backward': _ButtonLayout(centerX, centerY + verticalStep, 0.30),
+      'F:left': _ButtonLayout(centerX - horizontalStep, centerY, 0.30),
+      'F:right': _ButtonLayout(centerX + horizontalStep, centerY, 0.30),
+    };
+  }
 
   if (hasForward || hasBackward) {
     final cfgF = hasForward

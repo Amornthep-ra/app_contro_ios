@@ -94,16 +94,30 @@ class GamepadActionPill extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final enabled = onTap != null;
+    final metrics = GamepadAppBarMetrics.forWidth(
+      MediaQuery.of(context).size.width,
+    );
+    final wide = metrics.controlHeight >= 42;
     final horizontalPadding = compact
-        ? (iconOnly ? 8.0 : 10.0)
-        : (iconOnly ? 10.0 : 12.0);
-    final iconSize = compact ? 13.0 : 14.0;
-    final iconOnlySize = compact ? 15.0 : 16.0;
-    final fontSize = compact ? 10.0 : 11.0;
-    final gap = compact ? 5.0 : 6.0;
+        ? (iconOnly ? (wide ? 10.0 : 8.0) : (wide ? 12.0 : 10.0))
+        : (iconOnly ? (wide ? 12.0 : 10.0) : (wide ? 14.0 : 12.0));
+    final iconSize = compact
+        ? (wide ? metrics.iconSize - 4 : 13.0)
+        : (wide ? metrics.iconSize - 3 : 14.0);
+    final iconOnlySize = compact
+        ? (wide ? metrics.iconSize - 2 : 15.0)
+        : (wide ? metrics.iconSize : 16.0);
+    final fontSize = compact
+        ? (wide ? metrics.telemetryLabelFontSize - 1 : 10.0)
+        : (wide ? metrics.telemetryLabelFontSize : 11.0);
+    final gap = compact ? (wide ? 6.0 : 5.0) : (wide ? 8.0 : 6.0);
     final textColor =
-        Color.lerp(accent, isDark ? Colors.white : theme.colorScheme.onSurface, 0.4) ??
-            Colors.white;
+        Color.lerp(
+          accent,
+          isDark ? Colors.white : theme.colorScheme.onSurface,
+          0.4,
+        ) ??
+        Colors.white;
 
     return Opacity(
       opacity: enabled ? 1 : 0.46,
@@ -215,7 +229,8 @@ class GamepadAppBarBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolvedMetrics = metrics ??
+    final resolvedMetrics =
+        metrics ??
         GamepadAppBarMetrics.forWidth(MediaQuery.of(context).size.width);
 
     return AppBackButton(
@@ -249,37 +264,53 @@ class GamepadSpeedTogglePill extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final metrics = GamepadAppBarMetrics.forWidth(
+      MediaQuery.of(context).size.width,
+    );
     final textColor =
-        Color.lerp(accent, isDark ? Colors.white : theme.colorScheme.onSurface, 0.35) ??
-            Colors.white;
+        Color.lerp(
+          accent,
+          isDark ? Colors.white : theme.colorScheme.onSurface,
+          0.35,
+        ) ??
+        Colors.white;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: GamepadGlassTopPill(
         pillKey: pillKey,
         onTap: onTap,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+        padding: EdgeInsets.symmetric(
+          horizontal: metrics.controlHeight >= 42 ? 14 : 12,
+          vertical: 0,
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.speed_rounded, size: 14, color: accent),
-            const SizedBox(width: 6),
+            Icon(
+              Icons.speed_rounded,
+              size: metrics.iconSize - 2,
+              color: accent,
+            ),
+            SizedBox(width: metrics.labelIconGap),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 64),
+              constraints: BoxConstraints(
+                maxWidth: metrics.controlHeight >= 42 ? 82 : 64,
+              ),
               child: Text(
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: metrics.telemetryLabelFontSize,
                   fontWeight: FontWeight.w800,
                   color: textColor,
                 ),
               ),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: metrics.controlHeight >= 42 ? 6 : 4),
             Icon(
               expanded ? Icons.expand_less : Icons.expand_more,
-              size: 14,
+              size: metrics.iconSize - 2,
               color: textColor,
             ),
           ],
@@ -317,13 +348,13 @@ class GamepadToolIconPill extends StatelessWidget {
         : theme.colorScheme.onSurface.withAlpha((0.35 * 255).round());
     final iconColor = enabled
         ? (active
-            ? accent
-            : (Color.lerp(
-                  accent,
-                  isDark ? Colors.white : theme.colorScheme.onSurface,
-                  0.28,
-                ) ??
-                accent))
+              ? accent
+              : (Color.lerp(
+                      accent,
+                      isDark ? Colors.white : theme.colorScheme.onSurface,
+                      0.28,
+                    ) ??
+                    accent))
         : fallback;
     return Opacity(
       opacity: enabled ? 1 : 0.5,
@@ -377,11 +408,11 @@ class GamepadSizeToolPill extends StatelessWidget {
         : theme.colorScheme.onSurface.withAlpha((0.35 * 255).round());
     final color = enabled
         ? (Color.lerp(
-              accent,
-              isDark ? Colors.white : theme.colorScheme.onSurface,
-              0.32,
-            ) ??
-            accent)
+                accent,
+                isDark ? Colors.white : theme.colorScheme.onSurface,
+                0.32,
+              ) ??
+              accent)
         : fallback;
 
     return Opacity(

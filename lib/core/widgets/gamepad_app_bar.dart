@@ -9,6 +9,7 @@ Color _opacity(Color color, double opacity) =>
 class GamepadAppBarMetrics {
   static const double toolbarHeight = 44.0;
 
+  final double toolbarExtent;
   final double controlHeight;
   final double iconButtonExtent;
   final double labelButtonWidth;
@@ -23,6 +24,7 @@ class GamepadAppBarMetrics {
   final double telemetryValueMaxWidth;
 
   const GamepadAppBarMetrics({
+    required this.toolbarExtent,
     required this.controlHeight,
     required this.iconButtonExtent,
     required this.labelButtonWidth,
@@ -39,22 +41,32 @@ class GamepadAppBarMetrics {
 
   factory GamepadAppBarMetrics.forWidth(double width) {
     final wide = width >= 720;
-    final ultra = width >= 900;
-    const controlHeight = 34.0;
+    final expanded = width >= 1024;
+    final ultra = width >= 1200;
+    final toolbarExtent = expanded ? 60.0 : (wide ? 56.0 : toolbarHeight);
+    final controlHeight = expanded ? 44.0 : (wide ? 42.0 : 34.0);
 
     return GamepadAppBarMetrics(
+      toolbarExtent: toolbarExtent,
       controlHeight: controlHeight,
       iconButtonExtent: controlHeight,
-      labelButtonWidth: ultra ? 100.0 : (wide ? 94.0 : 88.0),
-      controlGap: wide ? 6.0 : 5.0,
-      sectionGap: wide ? 8.0 : 6.0,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      iconSize: wide ? 17.0 : 16.0,
+      labelButtonWidth: ultra
+          ? 126.0
+          : (expanded ? 116.0 : (wide ? 108.0 : 88.0)),
+      controlGap: expanded ? 9.0 : (wide ? 8.0 : 5.0),
+      sectionGap: expanded ? 12.0 : (wide ? 10.0 : 6.0),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: expanded ? 12 : (wide ? 11 : 8),
+        vertical: wide ? 7 : 5,
+      ),
+      iconSize: expanded ? 21.0 : (wide ? 20.0 : 16.0),
       borderRadius: BorderRadius.circular(999),
-      labelIconGap: 5.0,
-      telemetryLabelFontSize: 11.0,
-      telemetryValueFontSize: 11.0,
-      telemetryValueMaxWidth: ultra ? 48.0 : 44.0,
+      labelIconGap: expanded ? 7.0 : (wide ? 6.0 : 5.0),
+      telemetryLabelFontSize: expanded ? 14.0 : (wide ? 13.0 : 11.0),
+      telemetryValueFontSize: expanded ? 14.0 : (wide ? 13.0 : 11.0),
+      telemetryValueMaxWidth: ultra
+          ? 62.0
+          : (expanded ? 58.0 : (wide ? 54.0 : 44.0)),
     );
   }
 
@@ -81,6 +93,7 @@ class GamepadUnifiedAppBar extends StatelessWidget
   final EdgeInsetsGeometry toolbarPadding;
   final bool centerTitle;
   final bool useGlassBackground;
+  final double? toolbarHeight;
 
   const GamepadUnifiedAppBar({
     super.key,
@@ -100,11 +113,12 @@ class GamepadUnifiedAppBar extends StatelessWidget
     this.toolbarPadding = const EdgeInsets.symmetric(horizontal: 12),
     this.centerTitle = false,
     this.useGlassBackground = true,
+    this.toolbarHeight,
   });
 
   @override
   Size get preferredSize =>
-      const Size.fromHeight(GamepadAppBarMetrics.toolbarHeight);
+      Size.fromHeight(toolbarHeight ?? GamepadAppBarMetrics.toolbarHeight);
 
   bool get _hasTelemetry =>
       speedToggle != null ||
@@ -118,14 +132,12 @@ class GamepadUnifiedAppBar extends StatelessWidget
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final baseColor =
-        isDark
-            ? _opacity(const Color(0xFF111827), 0.94)
-            : _opacity(
-                Color.lerp(const Color(0xFFF8FAFC), cs.surface, 0.55) ??
-                    cs.surface,
-                0.97,
-              );
+    final baseColor = isDark
+        ? _opacity(const Color(0xFF111827), 0.94)
+        : _opacity(
+            Color.lerp(const Color(0xFFF8FAFC), cs.surface, 0.55) ?? cs.surface,
+            0.97,
+          );
     final border = _opacity(
       isDark ? const Color(0xFF38BDF8) : cs.outline,
       isDark ? 0.28 : 0.16,
@@ -187,28 +199,19 @@ class GamepadUnifiedAppBar extends StatelessWidget
       return null;
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: telemetryChildren,
-    );
+    return Row(mainAxisSize: MainAxisSize.min, children: telemetryChildren);
   }
 
   Widget? _buildTrailingControls(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final metrics = GamepadAppBarMetrics.forWidth(width);
-    final trailingChildren = <Widget>[
-      if (bleBadge != null) bleBadge!,
-    ];
+    final trailingChildren = <Widget>[if (bleBadge != null) bleBadge!];
 
-    final builtActions =
-        actionsBuilder != null
-            ? actionsBuilder!(metrics.controlGap)
-            : (actions != null && actions!.isNotEmpty
-                ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: actions!,
-                )
-                : null);
+    final builtActions = actionsBuilder != null
+        ? actionsBuilder!(metrics.controlGap)
+        : (actions != null && actions!.isNotEmpty
+              ? Row(mainAxisSize: MainAxisSize.min, children: actions!)
+              : null);
 
     if (builtActions != null) {
       if (trailingChildren.isNotEmpty) {
@@ -221,10 +224,7 @@ class GamepadUnifiedAppBar extends StatelessWidget
       return null;
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: trailingChildren,
-    );
+    return Row(mainAxisSize: MainAxisSize.min, children: trailingChildren);
   }
 
   Widget _buildUnifiedToolbar(BuildContext context) {
@@ -244,24 +244,21 @@ class GamepadUnifiedAppBar extends StatelessWidget
       child: Padding(
         padding: EdgeInsets.only(right: metrics.sectionGap),
         child: Align(
-          alignment:
-              telemetryRow != null && trailingControls != null
-                  ? Alignment.center
-                  : Alignment.centerLeft,
-          child:
-              combinedChildren.isEmpty
-                  ? const SizedBox.shrink()
-                  : FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment:
-                        telemetryRow != null && trailingControls != null
-                            ? Alignment.center
-                            : Alignment.centerLeft,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: combinedChildren,
-                    ),
+          alignment: telemetryRow != null && trailingControls != null
+              ? Alignment.center
+              : Alignment.centerLeft,
+          child: combinedChildren.isEmpty
+              ? const SizedBox.shrink()
+              : FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: telemetryRow != null && trailingControls != null
+                      ? Alignment.center
+                      : Alignment.centerLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: combinedChildren,
                   ),
+                ),
         ),
       ),
     );
@@ -273,10 +270,10 @@ class GamepadUnifiedAppBar extends StatelessWidget
       return telemetryRow == null
           ? const SizedBox.shrink()
           : FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: telemetryRow,
-          );
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: telemetryRow,
+            );
     }
     if (title != null && title!.trim().isNotEmpty) {
       return Text(title!, style: titleStyle);
@@ -334,12 +331,15 @@ class GamepadUnifiedAppBar extends StatelessWidget
     final metrics = GamepadAppBarMetrics.forWidth(
       MediaQuery.of(context).size.width,
     );
+    final resolvedToolbarHeight =
+        toolbarHeight ?? GamepadAppBarMetrics.toolbarHeight;
     final flexSpace =
-        flexibleSpace ?? (useGlassBackground ? _buildGlassBackground(context) : null);
+        flexibleSpace ??
+        (useGlassBackground ? _buildGlassBackground(context) : null);
 
     return AppBar(
       automaticallyImplyLeading: false,
-      toolbarHeight: GamepadAppBarMetrics.toolbarHeight,
+      toolbarHeight: resolvedToolbarHeight,
       elevation: 0,
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
@@ -348,9 +348,8 @@ class GamepadUnifiedAppBar extends StatelessWidget
       centerTitle: centerTitle,
       titleSpacing: toolbarContent == null ? metrics.titleSpacing : 0,
       flexibleSpace: flexSpace,
-      leading: toolbarContent == null ? leading : null,
-      leadingWidth:
-          toolbarContent == null && leading != null ? metrics.leadingWidth : null,
+      leading: leading,
+      leadingWidth: leading != null ? metrics.leadingWidth : null,
       title: _buildTitleWidget(context),
       actions: _buildActions(context),
     );

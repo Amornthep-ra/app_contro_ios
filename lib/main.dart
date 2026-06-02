@@ -2,6 +2,7 @@
 import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'core/routes/app_routes.dart';
+import 'core/utils/orientation_utils.dart';
 import 'core/ui/gamepad_skin.dart';
 import 'core/ui/theme_controller.dart';
 import 'core/ui/language_controller.dart';
@@ -46,6 +47,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ThemeController.init();
   await LanguageController.init();
+  await OrientationUtils.applyStartupOrientation();
   runApp(const MyApp());
 }
 
@@ -92,7 +94,6 @@ class MyApp extends StatelessWidget {
             return MaterialApp(
               title: 'PrinceBot Controller',
               debugShowCheckedModeBanner: false,
-              navigatorObservers: [LoggingNavigatorObserver()],
               themeMode: mode,
               theme: ThemeData(
                 colorScheme: lightScheme,
@@ -161,36 +162,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-// TEMP: log route changes to find unexpected pops on iOS.
-class LoggingNavigatorObserver extends NavigatorObserver {
-  LoggingNavigatorObserver();
-
-  @override
-  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    debugPrint('[nav] push ${route.settings.name ?? route.runtimeType}');
-    super.didPush(route, previousRoute);
-  }
-
-  @override
-  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    debugPrint('[nav] pop ${route.settings.name ?? route.runtimeType}');
-    super.didPop(route, previousRoute);
-  }
-
-  @override
-  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    debugPrint('[nav] remove ${route.settings.name ?? route.runtimeType}');
-    super.didRemove(route, previousRoute);
-  }
-
-  @override
-  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    debugPrint(
-      '[nav] replace ${oldRoute?.settings.name ?? oldRoute?.runtimeType}'
-      ' -> ${newRoute?.settings.name ?? newRoute?.runtimeType}',
-    );
-    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
-  }
-}
-

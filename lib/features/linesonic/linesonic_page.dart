@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/ble/ble_manager.dart';
+import '../../core/ui/adaptive_page_metrics.dart';
 import '../../core/ui/language_controller.dart';
 import '../bluetooth/bluetooth_ble_page.dart';
 import 'linesonic_pid_page.dart';
@@ -31,12 +32,15 @@ class _LineSonicPageState extends State<LineSonicPage> {
   }
 
   Widget _buildPlainBackButton(bool isThai) {
+    final metrics = AdaptivePageMetrics.forWidth(
+      MediaQuery.of(context).size.width,
+    );
     return SizedBox(
-      width: 44,
-      height: 44,
+      width: metrics.backButtonSize,
+      height: metrics.backButtonSize,
       child: IconButton(
         tooltip: _t(isThai, 'กลับ', 'Back'),
-        icon: const Icon(Icons.chevron_left_rounded, size: 30),
+        icon: Icon(Icons.chevron_left_rounded, size: metrics.backIconSize),
         onPressed: () {
           HapticFeedback.selectionClick();
           Navigator.maybePop(context);
@@ -52,9 +56,9 @@ class _LineSonicPageState extends State<LineSonicPage> {
     _openingBlePage = true;
     HapticFeedback.selectionClick();
     try {
-      await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const BluetoothBlePage()),
-      );
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const BluetoothBlePage()));
     } finally {
       _openingBlePage = false;
     }
@@ -63,6 +67,9 @@ class _LineSonicPageState extends State<LineSonicPage> {
   Widget _buildBleBadge(bool isThai) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final metrics = AdaptivePageMetrics.forWidth(
+      MediaQuery.of(context).size.width,
+    );
 
     return StreamBuilder<BleConnectionStatus>(
       stream: BleManager.instance.statusStream,
@@ -75,25 +82,25 @@ class _LineSonicPageState extends State<LineSonicPage> {
         final accent = connected
             ? const Color(0xFF16A34A)
             : reconnecting
-                ? const Color(0xFFF59E0B)
-                : failed
-                    ? const Color(0xFFDC2626)
-                    : const Color(0xFFEF4444);
+            ? const Color(0xFFF59E0B)
+            : failed
+            ? const Color(0xFFDC2626)
+            : const Color(0xFFEF4444);
         final icon = connected
             ? Icons.bluetooth_connected_rounded
             : reconnecting
-                ? Icons.bluetooth_searching_rounded
-                : Icons.bluetooth_disabled_rounded;
+            ? Icons.bluetooth_searching_rounded
+            : Icons.bluetooth_disabled_rounded;
         final label = connected
             ? 'BLE On'
             : reconnecting
-                ? 'Reconnecting...'
-                : failed
-                    ? 'Failed'
-                    : 'BLE Off';
+            ? 'Reconnecting...'
+            : failed
+            ? 'Failed'
+            : 'BLE Off';
 
         return Padding(
-          padding: const EdgeInsets.only(right: 12),
+          padding: EdgeInsets.only(right: metrics.isTablet ? 18 : 12),
           child: Tooltip(
             message: _t(
               isThai,
@@ -107,9 +114,13 @@ class _LineSonicPageState extends State<LineSonicPage> {
                 onTap: _openBlePage,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 140),
-                  height: 34,
-                  constraints: const BoxConstraints(maxWidth: 112),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  height: metrics.isTablet ? 42 : 34,
+                  constraints: BoxConstraints(
+                    maxWidth: metrics.isTablet ? 150 : 112,
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: metrics.isTablet ? 12 : 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Color.lerp(
                       scheme.surface,
@@ -118,7 +129,8 @@ class _LineSonicPageState extends State<LineSonicPage> {
                     ),
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
-                      color: Color.lerp(
+                      color:
+                          Color.lerp(
                             scheme.outlineVariant,
                             accent,
                             isDark ? 0.42 : 0.32,
@@ -129,18 +141,23 @@ class _LineSonicPageState extends State<LineSonicPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(icon, size: 15, color: accent),
-                      const SizedBox(width: 4),
+                      Icon(
+                        icon,
+                        size: metrics.isTablet ? 20 : 15,
+                        color: accent,
+                      ),
+                      SizedBox(width: metrics.isTablet ? 6 : 4),
                       Flexible(
                         child: Text(
                           label,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: metrics.isTablet ? 14 : 12,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0,
-                            color: Color.lerp(
+                            color:
+                                Color.lerp(
                                   accent,
                                   scheme.onSurface,
                                   isDark ? 0.25 : 0.42,
@@ -149,7 +166,7 @@ class _LineSonicPageState extends State<LineSonicPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: metrics.isTablet ? 6 : 4),
                       Container(
                         width: 6,
                         height: 6,
@@ -181,9 +198,7 @@ class _LineSonicPageState extends State<LineSonicPage> {
     setState(() => _openingPage = true);
     HapticFeedback.selectionClick();
     try {
-      await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => page),
-      );
+      await Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
     } finally {
       if (mounted) {
         setState(() => _openingPage = false);
@@ -197,6 +212,9 @@ class _LineSonicPageState extends State<LineSonicPage> {
       valueListenable: LanguageController.isThai,
       builder: (context, isThai, _) {
         final scheme = Theme.of(context).colorScheme;
+        final metrics = AdaptivePageMetrics.forWidth(
+          MediaQuery.of(context).size.width,
+        );
         final items = [
           _LineSonicItem(
             title: _t(isThai, 'ปรับค่า PID', 'PID Tuning'),
@@ -223,7 +241,7 @@ class _LineSonicPageState extends State<LineSonicPage> {
         return Scaffold(
           appBar: AppBar(
             automaticallyImplyLeading: false,
-            toolbarHeight: 44,
+            toolbarHeight: metrics.toolbarHeight,
             elevation: 0,
             backgroundColor: Colors.transparent,
             surfaceTintColor: Colors.transparent,
@@ -236,7 +254,7 @@ class _LineSonicPageState extends State<LineSonicPage> {
             title: Text(
               'LineSonic',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: metrics.titleSize,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0,
                 color: scheme.onSurface,
@@ -244,19 +262,25 @@ class _LineSonicPageState extends State<LineSonicPage> {
             ),
             actions: [_buildBleBadge(isThai)],
           ),
-          body: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              return _LineSonicCard(
-                item: item,
-                enabled: !_openingPage,
-                iconBuilder: _lineSonicIcon,
-                onTap: () => _openPage(item.page),
-              );
-            },
+          body: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: metrics.contentMaxWidth),
+              child: ListView.separated(
+                padding: metrics.pagePadding,
+                itemCount: items.length,
+                separatorBuilder: (_, __) => SizedBox(height: metrics.cardGap),
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  return _LineSonicCard(
+                    item: item,
+                    metrics: metrics,
+                    enabled: !_openingPage,
+                    iconBuilder: _lineSonicIcon,
+                    onTap: () => _openPage(item.page),
+                  );
+                },
+              ),
+            ),
           ),
         );
       },
@@ -280,12 +304,14 @@ class _LineSonicItem {
 
 class _LineSonicCard extends StatefulWidget {
   final _LineSonicItem item;
+  final AdaptivePageMetrics metrics;
   final bool enabled;
   final Widget Function(String name, {double size}) iconBuilder;
   final VoidCallback onTap;
 
   const _LineSonicCard({
     required this.item,
+    required this.metrics,
     required this.enabled,
     required this.iconBuilder,
     required this.onTap,
@@ -307,6 +333,7 @@ class _LineSonicCardState extends State<_LineSonicCard> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final metrics = widget.metrics;
 
     return AnimatedScale(
       scale: _pressed && widget.enabled ? 0.98 : 1.0,
@@ -318,34 +345,39 @@ class _LineSonicCardState extends State<_LineSonicCard> {
         child: Card(
           elevation: 3,
           shadowColor: scheme.shadow.withAlpha(18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(metrics.cardRadius),
+          ),
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(metrics.cardRadius),
             onTap: widget.enabled ? widget.onTap : null,
             onTapDown: widget.enabled ? (_) => _setPressed(true) : null,
             onTapCancel: () => _setPressed(false),
             onTapUp: (_) => _setPressed(false),
             child: Ink(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: EdgeInsets.all(metrics.cardPadding),
               decoration: BoxDecoration(
                 color: scheme.surface,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(metrics.cardRadius),
                 border: Border.all(color: scheme.outlineVariant.withAlpha(80)),
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: metrics.iconBoxSize,
+                    height: metrics.iconBoxSize,
                     decoration: BoxDecoration(
                       color: scheme.primaryContainer,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
-                      child: widget.iconBuilder(widget.item.iconAsset, size: 28),
+                      child: widget.iconBuilder(
+                        widget.item.iconAsset,
+                        size: metrics.iconSize,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: metrics.isTablet ? 16 : 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,8 +386,8 @@ class _LineSonicCardState extends State<_LineSonicCard> {
                           widget.item.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 18,
+                          style: TextStyle(
+                            fontSize: metrics.isTablet ? 20 : 18,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -365,7 +397,7 @@ class _LineSonicCardState extends State<_LineSonicCard> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: metrics.isTablet ? 15 : 13,
                             color: scheme.onSurfaceVariant,
                           ),
                         ),
@@ -374,8 +406,10 @@ class _LineSonicCardState extends State<_LineSonicCard> {
                   ),
                   Icon(
                     Icons.chevron_right_rounded,
-                    size: 22,
-                    color: scheme.onSurfaceVariant.withAlpha(isDark ? 130 : 100),
+                    size: metrics.isTablet ? 28 : 22,
+                    color: scheme.onSurfaceVariant.withAlpha(
+                      isDark ? 130 : 100,
+                    ),
                   ),
                 ],
               ),
